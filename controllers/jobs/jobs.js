@@ -1,94 +1,105 @@
 import fetch from "node-fetch";
-import jobs from '../../models/JobsModel.js'; // Import the Job model
+import jobs from '../../models/JobsModel.js';
+import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
+
+const apiUrl = "https://api.theirstack.com/v1/jobs/search";
+const THEIR_STACK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ6YW1hbmFyb29iYUBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6InVzZXIifQ.0koG5OvS2M8Fe_qjSubkEFmshu-hMac3UFBMKHs9HtI";
 
 const scrapJobs = async (req, res) => {
   try {
-    // Destructure fields from the request body
-    const { page, limit, posted_at_max_age_days } = req.body;
+    const pageNumberRecord = await JobsApiSettingModel.findById({ _id: "67477deb8f302ce3806641ed" });
+    let page = pageNumberRecord.pageNumber;
+    page += 1;
 
-    console.log("Page:", page);
-    console.log("Limit:", limit);
-    console.log("Posted at max age days:", posted_at_max_age_days);
-
-    // Check for missing fields
-    if (page === undefined || limit === undefined || posted_at_max_age_days === undefined) {
-      console.log("Please provide all fields");
-      return badRequestResponse(res, "Please provide all fields", null);
+    if (page === 5) {
+      page = 0;
     }
 
-    // Prepare API endpoint and request options
-    const apiUrl = "https://api.theirstack.com/v1/jobs/search";
-    const THEIR_STACK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ6YW1hbmFyb29iYUBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6InVzZXIifQ.0koG5OvS2M8Fe_qjSubkEFmshu-hMac3UFBMKHs9HtI"; // Replace with your actual token
+    await JobsApiSettingModel.findByIdAndUpdate(
+      { _id: "67477deb8f302ce3806641ed" },
+      { $set: { pageNumber: page } }
+    );
 
-    const body = {
-      page,
-      limit,
-      posted_at_max_age_days,
-    };
+    const limit = 1;
+    const posted_at_max_age_days = 15;
+    const include_total_results = false;
+    const job_title_or = ["developer", "software developer", "front-end developer", "back-end developer", "full-stack developer", "mobile developer", "android developer", "iOS developer", "web developer", "UX/UI designer", "quality assurance", "QA engineer", "software engineer", "system analyst", "data scientist", "data analyst", "machine learning engineer", "artificial intelligence engineer", "AI engineer", "cloud engineer", "DevOps engineer", "network engineer", "cybersecurity specialist", "security analyst", "blockchain developer", "database administrator", "DBA", "IT support specialist", "IT administrator", "IT consultant", "technical writer", "game developer", "embedded systems developer", "firmware developer", "application developer", "technical project manager", "solutions architect", "site reliability engineer", "SRE", "big data engineer", "ETL developer", "software architect", "scrum master", "technical lead", "programmer", "application engineer", "help desk technician", "IT technician", "robotics engineer", "systems engineer", "VR/AR developer", "IT auditor", "penetration tester", "information security manager", "cloud architect", "CRM developer", "ERP consultant"];
 
-    const options = {
+    const body = { page, limit, posted_at_max_age_days, include_total_results, job_title_or };
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${THEIR_STACK_TOKEN}`,
       },
       body: JSON.stringify(body),
-    };
+    });
 
-    // Make the API call
-    const response = await fetch(apiUrl, options);
-
-    // Check if the response is not OK
     if (!response.ok) {
       const error = await response.json();
       return badRequestResponse(res, "Failed to fetch jobs", error);
     }
 
-    // Parse the response data
     const data = await response.json();
+    const jobData = data.data;
 
-    // Log the response data to the console
-    console.log("API Response:", data);
-
-    // Loop over each job and save it to the database
-    const jobData = data.data; // Assuming the job data is in `data.data` as per the API response structure
+    // Prepare an array of jobs to insert in batch to minimize database hits
+    const jobsToSave = [];
+    let savedJobsCount = 0;
 
     for (let job of jobData) {
-      const newJob = new jobs({
-        title: job.job_title,
-        applyUrl: job.url,
-        companyName: job.company,
-        finalUrl: job.final_url,
-        sourceUrl: job.source_url,
-        location: job.location,
-        stateCode: job.state_code,
-        remote: job.remote,
-        hybrid: job.hybrid,
-        country: job.country || job.country_code, // Use the country code or country
-        seniority: job.seniority,
-        salary: job.salary_string || job.min_annual_salary, // Fallback to minimum salary if available
-        salaryCurrency: job.salary_currency,
-        description: job.description,
-        industry: job.company_object ? job.company_object.industry : null,
-        companyLogoLink: job.company_object ? job.company_object.logo : null,
-        companyUrl: job.company_object ? job.company_object.url : null,
-        numberOfJobs: job.company_object ? job.company_object.num_jobs : null,
-        foundedYear: job.company_object ? job.company_object.founded_year : null,
-        jobPostDate: new Date(job.date_posted), // Ensure the job post date is a valid Date object
-      });
+      const cleanDescription = job.description
+        ?.replace(/\*/g, "")
+        .replace(/\\n/g, " ")
+        .replace(/  +/g, " ")
+        .replace(/\\/g, "");
 
-      // Save the job entry to the database
-      try {
-        await newJob.save();
-        console.log(`Job saved: ${job.job_title}`);
-      } catch (error) {
-        console.error(`Error saving job ${job.job_title}:`, error.message);
-      }
+      // Check if job exists in DB (index the thierStackJobId to optimize this lookup)
+      const existingJob = await jobs.findOne({ thierStackJobId: job.id });
+      if (existingJob) continue;
+
+      jobsToSave.push({
+        thierStackJobId: job.id || null,
+        title: job.job_title || "No title provided",
+        applyUrl: job.url || "",
+        companyName: job.company || "Unknown Company",
+        finalUrl: job.final_url || "",
+        sourceUrl: job.source_url || "",
+        location: job.location || "Location not specified",
+        stateCode: job.state_code || "Unknown",
+        remote: job.remote !== undefined ? job.remote : false,
+        hybrid: job.hybrid !== undefined ? job.hybrid : false,
+        country: job.country || job.country_code || "Country not specified",
+        seniority: job.seniority || "Not specified",
+        salary: job.salary_string || job.min_annual_salary || "Not disclosed",
+        minAnnualSalary: job.min_annual_salary || null,
+        maxAnnualSalary: job.max_annual_salary || null,
+        salaryCurrency: job.salary_currency || "USD",
+        description: cleanDescription || "No description provided",
+        industry: job.company_object?.industry || "Industry not specified",
+        employment_statuses: job.employment_statuses || [],
+        companyLogoLink: job.company_object?.logo || null,
+        companyUrl: job.company_object?.url || null,
+        numberOfJobs: job.company_object?.num_jobs || 0,
+        foundedYear: job.company_object?.founded_year || null,
+        jobPostDate: new Date(job.date_posted) || new Date(),
+      });
     }
 
-    // Send the success response
-    return successResponse(res, "Jobs fetched and saved successfully", data);
+    // Bulk insert jobs to DB in one operation to reduce the number of database hits
+    const savedJobs = await jobs.insertMany(jobsToSave, { ordered: false }).catch(e => console.error(e));
+
+    savedJobsCount = savedJobs.length;
+
+    // Return response summary with total count, saved jobs, and skipped jobs
+    return successResponse(res, `${savedJobsCount} jobs fetched and saved successfully.`, {
+      totalJobsFetched: jobData.length,
+      JobsSavedInDB: savedJobsCount,
+      JobsAlreadyExistInDB: jobData.length - savedJobsCount,
+    });
+
   } catch (error) {
     console.error("Error in scrapJobs:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later");

@@ -2,9 +2,53 @@ import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
   {
+    thierStackJobId: {
+      type: Number,
+      required: true,
+    },
     title: {
       type: String,
       required: true,
+    },
+    location: {
+      type: String,
+      required: false,
+    },
+    country: {
+      type: String,
+      required: true,
+    },
+    salary: {
+      type: String,
+      required: false,
+    },
+    minAnnualSalary: {
+      type: Number,
+      required: false,
+    },
+    maxAnnualSalary: {
+      type: Number,
+      required: false,
+    },
+    salaryCurrency: {
+      type: String,
+      required: false,
+    },
+    industry: {
+      type: String,
+      required: false,
+    },
+    employment_statuses: {
+      type: [String],
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
+    },
+    jobPostDate: {
+      type: Date,
+      required: false,
     },
     applyUrl: {
       type: String,
@@ -22,10 +66,6 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    location: {
-      type: String,
-      required: false,
-    },
     stateCode: {
       type: String,
       required: false,
@@ -40,27 +80,7 @@ const jobSchema = new mongoose.Schema(
       required: false,
       default: false,
     },
-    country: {
-      type: String,
-      required: true,
-    },
     seniority: {
-      type: String,
-      required: false,
-    },
-    salary: {
-      type: String,
-      required: false,
-    },
-    salaryCurrency: {
-      type: String,
-      required: false,
-    },
-    description: {
-      type: String,
-      required: false,
-    },
-    industry: {
       type: String,
       required: false,
     },
@@ -78,10 +98,6 @@ const jobSchema = new mongoose.Schema(
     },
     foundedYear: {
       type: Number,
-      required: false,
-    },
-    jobPostDate: {
-      type: Date,
       required: false,
     },
   },

@@ -103,28 +103,28 @@ const scrapJobs = async (req, res) => {
   }
 };
 
-// const getOneJob = async (req, res) => {
-//   try {
-//     const id = req.params.id;
+const getOneJob = async (req, res) => {
+  try {
+    const id = req.params.id;
 
-//     if (id) {
-//       return notFoundResponse(res, "Job Id not provided", null);
-//     }
+    if (!id) {
+      return notFoundResponse(res, "Job Id not provided", null);
+    }
 
-//     const job = await jobs.findById(id);
+    const job = await jobs.findById(id);
 
-//     if (job) {
-//       return successResponse(res, "job fetched successfully", job);
-//     } else {
-//       return notFoundResponse(res, "job not found", null);
-//     }
-//   } catch (error) {
-//     return serverErrorResponse(
-//       res,
-//       "Internal server error. Please try again later"
-//     );
-//   }
-// };
+    if (job) {
+      return successResponse(res, "job fetched successfully", job);
+    } else {
+      return notFoundResponse(res, "job not found", null);
+    }
+  } catch (error) {
+    return serverErrorResponse(
+      res,
+      "Internal server error. Please try again later"
+    );
+  }
+};
 
 // const getAllJobs = async (req, res) => {
 //   try {
@@ -199,4 +199,4 @@ const scrapJobs = async (req, res) => {
 // };
 
 // export { scrapJobs, getOneJob, getAllJobs, deleteJob };
-export { scrapJobs };
+export { scrapJobs, getOneJob };

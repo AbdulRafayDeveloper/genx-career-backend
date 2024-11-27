@@ -27,6 +27,7 @@
     "path": "^0.12.7",
     "pdf-parse": "^1.1.1",
     "pdf.js-extract": "^0.2.1",
+    "require": "^2.4.20",
     "textract": "^2.5.0",
     "vercel": "^37.11.0"
   }

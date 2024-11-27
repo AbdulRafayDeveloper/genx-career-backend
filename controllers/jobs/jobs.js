@@ -1,14 +1,15 @@
 import fetch from "node-fetch";
 import jobs from '../../models/JobsModel.js';
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
+import jobsTitleforFetching from '../../constants/jobsData.js';
 import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
-
-const apiUrl = "https://api.theirstack.com/v1/jobs/search";
-const THEIR_STACK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ6YW1hbmFyb29iYUBnbWFpbC5jb20iLCJwZXJtaXNzaW9ucyI6InVzZXIifQ.0koG5OvS2M8Fe_qjSubkEFmshu-hMac3UFBMKHs9HtI";
+const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
+const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
+const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
 
 const scrapJobs = async (req, res) => {
   try {
-    const pageNumberRecord = await JobsApiSettingModel.findById({ _id: "67477deb8f302ce3806641ed" });
+    const pageNumberRecord = await JobsApiSettingModel.findById({ _id: JOB_SETTINGS_RECORD_ID });
     let page = pageNumberRecord.pageNumber;
     page += 1;
 
@@ -17,18 +18,18 @@ const scrapJobs = async (req, res) => {
     }
 
     await JobsApiSettingModel.findByIdAndUpdate(
-      { _id: "67477deb8f302ce3806641ed" },
+      { _id: JOB_SETTINGS_RECORD_ID },
       { $set: { pageNumber: page } }
     );
 
     const limit = 1;
     const posted_at_max_age_days = 15;
     const include_total_results = false;
-    const job_title_or = ["developer", "software developer", "front-end developer", "back-end developer", "full-stack developer", "mobile developer", "android developer", "iOS developer", "web developer", "UX/UI designer", "quality assurance", "QA engineer", "software engineer", "system analyst", "data scientist", "data analyst", "machine learning engineer", "artificial intelligence engineer", "AI engineer", "cloud engineer", "DevOps engineer", "network engineer", "cybersecurity specialist", "security analyst", "blockchain developer", "database administrator", "DBA", "IT support specialist", "IT administrator", "IT consultant", "technical writer", "game developer", "embedded systems developer", "firmware developer", "application developer", "technical project manager", "solutions architect", "site reliability engineer", "SRE", "big data engineer", "ETL developer", "software architect", "scrum master", "technical lead", "programmer", "application engineer", "help desk technician", "IT technician", "robotics engineer", "systems engineer", "VR/AR developer", "IT auditor", "penetration tester", "information security manager", "cloud architect", "CRM developer", "ERP consultant"];
+    const job_title_or = jobsTitleforFetching;
 
     const body = { page, limit, posted_at_max_age_days, include_total_results, job_title_or };
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(THEIR_STACK_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,11 +51,7 @@ const scrapJobs = async (req, res) => {
     let savedJobsCount = 0;
 
     for (let job of jobData) {
-      const cleanDescription = job.description
-        ?.replace(/\*/g, "")
-        .replace(/\\n/g, " ")
-        .replace(/  +/g, " ")
-        .replace(/\\/g, "");
+      const cleanDescription = job.description?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");
 
       // Check if job exists in DB (index the thierStackJobId to optimize this lookup)
       const existingJob = await jobs.findOne({ thierStackJobId: job.id });

@@ -24,6 +24,7 @@
     "node-summarizer": "^1.0.7",
     "nodemailer": "^6.9.15",
     "nodemon": "^3.1.7",
+    "patch-package": "^8.0.0",
     "path": "^0.12.7",
     "pdf-parse": "^1.1.1",
     "pdf.js-extract": "^0.2.1",

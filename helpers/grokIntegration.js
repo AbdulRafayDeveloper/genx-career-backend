@@ -13,7 +13,7 @@ const analyzeCVAndJobDescription = async (cvContent, jobDescription) => {
     const cvWordCount = cvContent.split(" ").length;
     const jdWordCount = jobDescription.split(" ").length;
 
-    if (cvWordCount > 1000 || jdWordCount > 1500) {
+    if (cvWordCount > 1000) {
       return { status: 400, message: "Cv Content should not be more than 1000 words" };
     }
 

@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import jobs from '../../models/JobsModel.js';
+console.log(jobs)
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import jobsTitleforFetching from '../../constants/jobsData.js';
 import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
@@ -126,77 +127,121 @@ const getOneJob = async (req, res) => {
   }
 };
 
-// const getAllJobs = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1;
-//     const pageSize = parseInt(req.query.limit) || 10;
-//     const searchQuery = req.query.search || "";
+const getAllJobs = async (req, res) => {
+  try {
+    const { pageNumber = 1, pageSize = 15, search = '', location = '', remote = '', datePosted = 'anytime', minSalary, maxSalary } = req.query;
+    const filters = {};
 
-//     let query = {};
-//     if (searchQuery) {
-//       query.$or = [
-//         { name: { $regex: searchQuery, $options: "i" } },
-//         { email: { $regex: searchQuery, $options: "i" } },
-//       ];
-//     }
-//     const totalRecords = await countContacts(query);
-//     if (!totalRecords) {
-//       return notFoundResponse(res, "No contacts found.", null);
-//     }
-//     const totalPages = Math.ceil(totalRecords / pageSize);
-//     const skip = (page - 1) * pageSize;
-//     const contacts = await listContacts(query, skip, pageSize);
-//     if (!contacts || contacts.length === 0) {
-//       return notFoundResponse(
-//         res,
-//         "No contacts found for the given page.",
-//         null
-//       );
-//     }
-//     return successResponse(res, "Contacts fetched successfully.", {
-//       records: contacts,
-//       pagination: {
-//         totalRecords,
-//         totalPages,
-//         currentPage: page,
-//         pageSize,
-//       },
-//     });
-//   } catch (error) {
-//     return serverErrorResponse(
-//       res,
-//       "Internal Server Error. Please try again later!"
-//     );
-//   }
-// };
+    // Search filter
+    if (search) {
+      filters.title = { $regex: search, $options: 'i' };
+    }
 
-// const deleteJob = async (req, res) => {
-//   try {
-//     const id = req.params.id; // Extract the job ID from the request parameters
+    // Location filter (exact match)
+    if (location) {
+      filters.location = location;
+    }
 
-//     // Check if the job exists
-//     const job = await jobs.findById(id);
-//     if (!job) {
-//       return notFoundResponse(res, "No Job found", null); // Job not found
-//     }
+    // Remote filter (exact match)
+    if (remote === 'true') {
+      filters.remote = true;
+    }
 
-//     // Delete the job
-//     const jobDelete = await jobs.findByIdAndDelete(id);
-//     if (jobDelete) {
-//       return successResponse(res, "Job deleted successfully", jobDelete); // Success response
-//     } else {
-//       return serverErrorResponse(
-//         res,
-//         "Unable to delete job. Please try again later"
-//       ); // Server error response
-//     }
-//   } catch (error) {
-//     return serverErrorResponse(
-//       res,
-//       "Internal Server Error. Please try again later"
-//     );
-//   }
-// };
+    // Date posted filter (custom logic for last X days, weeks, months, etc.)
+    if (datePosted !== 'anytime') {
+      const dateFilter = getDateFilter(datePosted);
+      if (dateFilter) {
+        filters.jobPostDate = { $gte: dateFilter };
+      }
+    }
 
-// export { scrapJobs, getOneJob, getAllJobs, deleteJob };
-export { scrapJobs, getOneJob };
+    // Salary range filter
+    if (minSalary || maxSalary) {
+      filters.minAnnualSalary = {};
+      if (minSalary) filters.minAnnualSalary.$gte = parseInt(minSalary);
+      if (maxSalary) filters.minAnnualSalary.$lte = parseInt(maxSalary);
+    }
+
+    // Pagination logic
+    const skip = (pageNumber - 1) * pageSize;
+    const limit = parseInt(pageSize);
+
+    // Fetch jobs with the provided filters and pagination
+    const getAllJobs = await jobs.find(filters).skip(skip).limit(limit);
+    const totalJobsCount = await jobs.countDocuments(filters);
+
+    return successResponse(res, 'Jobs fetched successfully.', {
+      getAllJobs,
+      totalJobsCount,
+      pageNumber: parseInt(pageNumber),
+      pageSize: limit,
+    });
+
+  } catch (error) {
+    console.error('Error in getAllJobs:', error.message);
+    return serverErrorResponse(res, 'Internal server error. Please try again later');
+  }
+};
+
+function getDateFilter(datePosted) {
+  const currentDate = new Date();
+  let filterDate;
+
+  switch (datePosted) {
+    case 'last_day':
+      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 1)); // 1 day ago
+      break;
+    case 'last_3_days':
+      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 3)); // 3 days ago
+      break;
+    case 'last_week':
+      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 7)); // 1 week ago
+      break;
+    case 'last_2_weeks':
+      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 14)); // 2 weeks ago
+      break;
+    case 'last_month':
+      filterDate = new Date(currentDate.setMonth(currentDate.getMonth() - 1)); // 1 month ago
+      break;
+    default:
+      filterDate = new Date(0); // Anytime (no filter)
+      break;
+  }
+
+  return filterDate;
+}
+
+const deleteJob = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      return notFoundResponse(res, "Job Id not provided", null);
+    }
+
+    const job = await jobs.findById(id);
+
+    if (!job) {
+      return notFoundResponse(res, "No Job found", null);
+    }
+
+    // Delete the job
+    const jobDelete = await jobs.findByIdAndDelete(id);
+
+    if (jobDelete) {
+      return successResponse(res, "Job deleted successfully", jobDelete);
+    } else {
+      return serverErrorResponse(
+        res,
+        "Unable to delete job. Please try again later"
+      );
+    }
+  } catch (error) {
+    return serverErrorResponse(
+      res,
+      "Internal Server Error. Please try again later"
+    );
+  }
+};
+
+export { scrapJobs, getOneJob, deleteJob, getAllJobs };

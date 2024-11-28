@@ -13,12 +13,12 @@ const analyzeCVAndJobDescription = async (cvContent, jobDescription) => {
     const cvWordCount = cvContent.split(" ").length;
     const jdWordCount = jobDescription.split(" ").length;
 
-    if (cvWordCount > 1000) {
-      return { status: 400, message: "Cv Content should not be more than 1000 words" };
+    if (cvWordCount > 850) {
+      return { status: 400, message: "Cv Content should not be more than 850 words" };
     }
 
-    if (jdWordCount > 700) {
-      return { status: 400, message: "Job Description Content should not be more than 700 words" };
+    if (jdWordCount > 500) {
+      return { status: 400, message: "Job Description Content should not be more than 500 words" };
     }
 
     const chatCompletion = await groq.chat.completions.create({
@@ -39,7 +39,8 @@ const analyzeCVAndJobDescription = async (cvContent, jobDescription) => {
 
     const responseContent =
       chatCompletion.choices[0]?.message?.content || "No response from Groq";
-    return { status: 200, message: "Success", content: responseContent };
+    
+      return responseContent;
   } catch (error) {
     console.error("Error in analyzeCVAndJobDescription:", error);
     return { status: 500, message: "Internal server error. Please try again later" };

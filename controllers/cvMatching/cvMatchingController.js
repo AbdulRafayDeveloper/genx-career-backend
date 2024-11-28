@@ -1,69 +1,180 @@
-import jobs from "../../models/JobsModel.js"; // Import the Job model
+import jobs from "../../models/JobsModel.js";
 import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
+import { analyzeCVAndJobDescription } from "../../helpers/grokIntegration.js";
 import pdfParse from "pdf-parse";
-import { SummarizerManager } from "node-summarizer"; // Import node-summarizer
+import { SummarizerManager } from "node-summarizer";
+import Users from "../../models/userModel.js";
+import CvMatchers from "../../models/cvMatchersModel.js";
 
 // Function to extract text from a PDF file
 const extractTextFromPDF = async (buffer) => {
-  try {
-    const data = await pdfParse(buffer);
-    return data.text; // Extracted text
-  } catch (err) {
-    throw new Error("Error extracting PDF text: " + err.message);
-  }
+    try {
+        const data = await pdfParse(buffer);
+        return data.text; // Extracted text
+    } catch (err) {
+        throw new Error("Error extracting PDF text: " + err.message);
+    }
 };
 
 // Summarization function
 const summarizeText = async (text, maxLength = 1000) => {
-  try {
-    while (text.split(/\s+/).length > maxLength) {
-      const summarizer = new SummarizerManager(text, 5); // Summarize into 5 sentences
-      const summary = await summarizer.getSummaryByFrequency();
-      text = summary.summary;
+    try {
+        // console.log("before text: ", text);
+        // console.log("maxLength", maxLength);
+
+        while (text.split(/\s+/).length > maxLength) {
+            const summarizer = new SummarizerManager(text, 5); // Summarize into 5 sentences
+            const summary = await summarizer.getSummaryByFrequency();
+            text = summary.summary;
+        }
+        // console.log("after text", text);
+        return text;
+    } catch (err) {
+        throw new Error("Error summarizing text: " + err.message);
     }
-    return text;
-  } catch (err) {
-    throw new Error("Error summarizing text: " + err.message);
-  }
 };
 
 const userCvMatching = async (req, res) => {
-  try {
-    // Check if a file is uploaded
-    if (!req.file) {
-      return badRequestResponse(res, "No file uploaded. Kindly upload a file!");
+    try {
+        const { userId, jobId } = req.body;
+
+        if (!userId) {
+            return badRequestResponse(res, "Please Login First to Match your CV", null);
+        }
+
+        const user = await Users.findById(userId);
+
+        if (!user) {
+            return badRequestResponse(res, "User not found", null);
+        }
+
+        if (!req.file) {
+            return badRequestResponse(res, "No file uploaded. Kindly upload a file!");
+        }
+
+        let cvContent = await extractTextFromPDF(req.file.buffer);
+        let cvWordCount = cvContent.split(/\s+/).length;
+
+        if (cvWordCount > 850) {
+            cvContent = await summarizeText(content, 850);
+            cvWordCount = content.split(/\s+/).length;
+        }
+
+        const job = await jobs.findById(jobId);
+
+        if (!job) {
+            return badRequestResponse(res, "Job not found with the provided ID!");
+        }
+
+        let jobDescription = job.description;
+        let jobWordCount = jobDescription.split(/\s+/).length;
+
+        if (jobWordCount > 500) {
+            jobDescription = await summarizeText(jobDescription, 500);
+            jobWordCount = jobDescription.split(/\s+/).length;
+        }
+
+        const result = await analyzeCVAndJobDescription(cvContent, jobDescription);
+
+        // Check if user already exists in cvMatchers
+        let cvMatcher = await CvMatchers.findOne({ userId: user._id });
+
+        if (!cvMatcher) {
+            // If no existing record, create a new one
+            cvMatcher = new CvMatchers({
+                userId: user._id,
+                userName: user.name,
+                userEmail: user.email,
+                result: [
+                    {
+                        cvContext: cvContent,
+                        jobId: job._id,
+                        matchingOutput: result,
+                    },
+                ],
+            });
+
+            await cvMatcher.save();
+        } else {
+            // If record exists, push new matching result
+            cvMatcher.result.push({
+                cvContext: cvContent,
+                jobId: job._id,
+                matchingOutput: result,
+            });
+
+            await cvMatcher.save();
+        }
+
+        const responseData = {
+            CvTextLength: cvWordCount,
+            CvText: cvContent,
+            jobDescriptionLength: jobWordCount,
+            jobDescription: jobDescription,
+            CvMatchingResult: result,
+        };
+
+        return successResponse(res, responseData, "CV matching process completed and results saved successfully.");
+    } catch (error) {
+        console.error("Error in cv-matching:", error.message);
+        return serverErrorResponse(res, "Internal server error. Please try again later.");
     }
-
-    // Extract text from the uploaded CV (PDF)
-    const content = await extractTextFromPDF(req.file.buffer);
-
-    // Summarize if text is more than 1000 words
-    const wordCount = content.split(/\s+/).length;
-    let summarizedContent = content;
-    if (wordCount > 1000) {
-      summarizedContent = await summarizeText(content, 1000);
-    }
-
-    // Extract job description using the job ID (assume it's sent in `req.body.jobId`)
-    const { jobId } = req.body;
-    const job = await jobs.findById(jobId);
-    if (!job) {
-      return badRequestResponse(res, "Job not found with the provided ID!");
-    }
-    const jobDescription = job.description; // Assuming the Job model has a `description` field
-
-    // Prepare the response
-    const responseData = {
-      extractedCvText: summarizedContent,
-      jobDescription: jobDescription,
-    };
-
-    // Send a success response with the data
-    return successResponse(res, responseData, "CV matching process completed successfully.");
-  } catch (error) {
-    console.error("Error in cv-matching:", error.message);
-    return serverErrorResponse(res, "Internal server error. Please try again later.");
-  }
 };
 
-export { userCvMatching };
+const getOneCvMatcher = async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        if (!id) {
+            return notFoundResponse(res, "Id not provided", null);
+        }
+
+        const cvMatcherRecord = await CvMatchers.findById(id);
+
+        if (cvMatcherRecord) {
+            return successResponse(res, "Cv Matcher Record fetched successfully", cvMatcherRecord);
+        } else {
+            return notFoundResponse(res, "Record not found", null);
+        }
+    } catch (error) {
+        return serverErrorResponse(
+            res,
+            "Internal server error. Please try again later"
+        );
+    }
+};
+
+const deleteCvMatcher = async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        if (!id) {
+            return notFoundResponse(res, "Id not provided", null);
+        }
+
+        const cvMatcherRecord = await CvMatchers.findById(id);
+
+        if (!cvMatcherRecord) {
+            return notFoundResponse(res, "cv matcher record not found", null);
+        }
+
+        // Delete the cv matcher
+        const cvMatcherDelete = await CvMatchers.findByIdAndDelete(id);
+
+        if (cvMatcherDelete) {
+            return successResponse(res, "Cv Matcher deleted successfully", cvMatcherDelete);
+        } else {
+            return serverErrorResponse(
+                res,
+                "Unable to delete record. Please try again later"
+            );
+        }
+    } catch (error) {
+        return serverErrorResponse(
+            res,
+            "Internal Server Error. Please try again later"
+        );
+    }
+};
+
+export { userCvMatching, getOneCvMatcher, deleteCvMatcher };

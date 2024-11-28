@@ -1,6 +1,5 @@
 import fetch from "node-fetch";
 import jobs from '../../models/JobsModel.js';
-console.log(jobs)
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import jobsTitleforFetching from '../../constants/jobsData.js';
 import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";

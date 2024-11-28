@@ -144,6 +144,25 @@ const getOneCvMatcher = async (req, res) => {
     }
 };
 
+const getAllCvMatchers = async (req, res) => {
+    try {
+        const { pageNumber = 1, pageSize = 15, search = '' } = req.query;
+
+        const filters = search ? { userName: { $regex: search, $options: 'i' } } : {};
+
+        const skip = (pageNumber - 1) * pageSize;
+        const limit = parseInt(pageSize);
+        
+        const getAllMatchers = await CvMatchers.find(filters).skip(skip).limit(limit);
+        const totalMatchersCount = await CvMatchers.countDocuments(filters);
+
+        return successResponse(res, 'CV matchers fetched successfully.', { matchers: getAllMatchers, totalMatchersCount, pageNumber: parseInt(pageNumber), pageSize: limit, });
+    } catch (error) {
+        console.error('Error in getAllCvMatchers:', error.message);
+        return serverErrorResponse(res, 'Internal server error. Please try again later.');
+    }
+};
+
 const deleteCvMatcher = async (req, res) => {
     try {
         const id = req.params.id;
@@ -177,4 +196,4 @@ const deleteCvMatcher = async (req, res) => {
     }
 };
 
-export { userCvMatching, getOneCvMatcher, deleteCvMatcher };
+export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher };

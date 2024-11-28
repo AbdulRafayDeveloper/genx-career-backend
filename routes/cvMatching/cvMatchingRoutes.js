@@ -1,5 +1,5 @@
 import express from "express";
-import { userCvMatching, getOneCvMatcher, deleteCvMatcher } from "../../controllers/cvMatching/cvMatchingController.js";
+import { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher } from "../../controllers/cvMatching/cvMatchingController.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -22,7 +22,7 @@ export const upload = multer({
 });
 
 router.post("/cv-matching", upload.single("file"), userCvMatching);
-// router.get("/cv-matching", getAllCvMatchers);
+router.get("/cv-matching", getAllCvMatchers);
 router.get("/cv-matching/:id", getOneCvMatcher);
 router.delete("/cv-matching/:id", deleteCvMatcher);
 

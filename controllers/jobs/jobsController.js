@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import jobs from '../../models/jobsModel.js';
+import jobsModel from '../../models/jobsModel.js';
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import jobsTitleforFetching from '../../constants/jobsData.js';
 import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
@@ -57,7 +57,7 @@ const scrapJobs = async (req, res) => {
       const cleanDescription = job.description?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");
 
       // Check if job exists in DB (index the thierStackJobId to optimize this lookup)
-      const existingJob = await jobs.findOne({ thierStackJobId: job.id });
+      const existingJob = await jobsModel.findOne({ thierStackJobId: job.id });
       if (existingJob) continue;
 
       jobsToSave.push({
@@ -89,7 +89,7 @@ const scrapJobs = async (req, res) => {
     }
 
     // Bulk insert jobs to DB in one operation to reduce the number of database hits
-    const savedJobs = await jobs.insertMany(jobsToSave, { ordered: false }).catch(e => console.error(e));
+    const savedJobs = await jobsModel.insertMany(jobsToSave, { ordered: false }).catch(e => console.error(e));
     savedJobsCount = savedJobs.length;
 
     // Return response summary with total count, saved jobs, and skipped jobs
@@ -117,7 +117,7 @@ const getOneJob = async (req, res) => {
       return badRequestResponse(res, "Invalid ID format", null);
     }
 
-    const job = await jobs.findById(id);
+    const job = await jobsModel.findById(id);
 
     if (!job) {
       return notFoundResponse(res, "Record not found in the database", null);
@@ -170,8 +170,8 @@ const getAllJobs = async (req, res) => {
     const limit = parseInt(pageSize);
 
     // Fetch jobs with the provided filters and pagination
-    const getAllJobs = await jobs.find(filters).skip(skip).limit(limit);
-    const totalJobsCount = await jobs.countDocuments(filters);
+    const getAllJobs = await jobsModel.find(filters).skip(skip).limit(limit);
+    const totalJobsCount = await jobsModel.countDocuments(filters);
 
     return successResponse(res, 'Jobs fetched successfully.', {
       getAllJobs,
@@ -194,14 +194,14 @@ const deleteJob = async (req, res) => {
       return notFoundResponse(res, "Job Id not provided", null);
     }
 
-    const job = await jobs.findById(id);
+    const job = await jobsModel.findById(id);
 
     if (!job) {
       return notFoundResponse(res, "No Job found", null);
     }
 
     // Delete the job
-    const jobDelete = await jobs.findByIdAndDelete(id);
+    const jobDelete = await jobsModel.findByIdAndDelete(id);
 
     if (jobDelete) {
       return successResponse(res, "Job deleted successfully", jobDelete);

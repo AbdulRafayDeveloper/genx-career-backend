@@ -1,5 +1,5 @@
 import UsersCollection from '../../models/usersModel.js';
-import JobsCollection from '../../models/jobsModel.js';
+import jobsModel from '../../models/jobsModel.js';
 import CvMatchersCollection from '../../models/cvMatchersModel.js';
 import ContactsUsCollection from '../../models/contactsModel.js';
 import { badRequestResponse, serverErrorResponse, successResponse } from "../../helpers/apiResponsesHelpers.js";
@@ -7,7 +7,7 @@ import { badRequestResponse, serverErrorResponse, successResponse } from "../../
 const dashboardStats = async (req, res) => {
   try {
     const totalUsers = await UsersCollection.countDocuments({ role: "user" });
-    const totalJobs = await JobsCollection.countDocuments();
+    const totalJobs = await jobsModel.countDocuments();
     const totalCvMatchers = await CvMatchersCollection.countDocuments();
     const totalContacts = await ContactsUsCollection.countDocuments();
     const totalQueriesData = await ContactsUsCollection.aggregate([

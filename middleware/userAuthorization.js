@@ -2,10 +2,8 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 import {
-  successResponse,
   badRequestResponse,
   notFoundResponse,
-  conflictResponse,
   serverErrorResponse,
   unauthorizedResponse,
 } from "../helpers/apiResponses.js";
@@ -23,16 +21,13 @@ const authenticateLoginToken = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.ADMIN_LOGIN_TOKEN);
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = { _id: decoded.id, role: decoded.role };
+
     if (req.user.role !== "admin") {
-      return unauthorizedResponse(
-        res,
-        "Access denied. Admin role required.",
-        null
-      );
+      return unauthorizedResponse(res, "Access denied. Admin role required.", null);
     }
+    
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

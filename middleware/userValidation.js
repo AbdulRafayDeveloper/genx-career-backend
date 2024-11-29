@@ -1,4 +1,4 @@
-import userSchema from "../validation/userValidation.js";
+import userValidation from "../validation/userValidation.js";
 import {
   badRequestResponse,
   serverErrorResponse,
@@ -6,7 +6,7 @@ import {
 
 const validateUser = async (req, res, next) => {
   try {
-    const { error } = await userSchema.validate(req.body, {
+    const { error } = await userValidation.validate(req.body, {
       abortEarly: false,
     });
 

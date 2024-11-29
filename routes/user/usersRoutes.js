@@ -3,7 +3,7 @@ import {
   deleteUserController,
   getAllUsersController,
   getOneUserController,
-} from "../../controllers/user/users.js";
+} from "../../controllers/user/usersController.js";
 import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 
 const router = express.Router();

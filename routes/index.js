@@ -1,9 +1,10 @@
 import express from 'express';
-import userAuthRoutes from './user/auth.js';
+import userAuthRoutes from './user/authRoutes.js';
 import userRoutes from './user/usersRoutes.js';
 import contactUsRoutes from './user/contactUsRoutes.js';
-import jobsRoutes from './jobs/jobs.js';
+import jobsRoutes from './jobs/jobsRoutes.js';
 import cvMatchingRoutes from './cvMatching/cvMatchingRoutes.js';
+import adminDashboardRoutes from './dashboard/adminDashboardRoutes.js';
 
 const router = express.Router();
 
@@ -13,10 +14,11 @@ router.get("/", (req, res) => {
 })
 
 // Attach all routes here
-router.use('/api/user', userAuthRoutes);
-router.use('/api/user', userRoutes);
-router.use('/api/user', contactUsRoutes);
+router.use('/api', userAuthRoutes);
+router.use('/api', userRoutes);
+router.use('/api', contactUsRoutes);
 router.use('/api', jobsRoutes);
 router.use('/api', cvMatchingRoutes);
+router.use('/api', adminDashboardRoutes);
 
 export default router;

@@ -2,7 +2,8 @@ import fetch from "node-fetch";
 import jobs from '../../models/JobsModel.js';
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import jobsTitleforFetching from '../../constants/jobsData.js';
-import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
+import mongoose from "mongoose";
 const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
 const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
 const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
@@ -98,7 +99,7 @@ const scrapJobs = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in scrapJobs:", error.message);
+    console.error("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later");
   }
 };
@@ -108,21 +109,23 @@ const getOneJob = async (req, res) => {
     const id = req.params.id;
 
     if (!id) {
-      return notFoundResponse(res, "Job Id not provided", null);
+      return notFoundResponse(res, "Id not provided", null);
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
     }
 
     const job = await jobs.findById(id);
 
-    if (job) {
-      return successResponse(res, "job fetched successfully", job);
-    } else {
-      return notFoundResponse(res, "job not found", null);
+    if (!job) {
+      return notFoundResponse(res, "Record not found in the database", null);
     }
+
+    return successResponse(res, "Record fetched successfully", job);
   } catch (error) {
-    return serverErrorResponse(
-      res,
-      "Internal server error. Please try again later"
-    );
+    console.error("Error Message in Catch BLock:", error.message);
+    return serverErrorResponse(res, "Internal server error. Please try again later.");
   }
 };
 
@@ -177,7 +180,7 @@ const getAllJobs = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in getAllJobs:', error.message);
+    console.error("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, 'Internal server error. Please try again later');
   }
 };
@@ -188,7 +191,7 @@ function getDateFilter(datePosted) {
 
   switch (datePosted) {
     case 'last_day':
-      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 1)); 
+      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 1));
       break;
     case 'last_3_days':
       filterDate = new Date(currentDate.setDate(currentDate.getDate() - 3));
@@ -236,10 +239,8 @@ const deleteJob = async (req, res) => {
       );
     }
   } catch (error) {
-    return serverErrorResponse(
-      res,
-      "Internal Server Error. Please try again later"
-    );
+    console.error("Error Message in Catch BLock:", error.message);
+    return serverErrorResponse(res, "Internal Server Error. Please try again later");
   }
 };
 

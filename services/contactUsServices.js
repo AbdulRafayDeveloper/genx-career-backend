@@ -1,4 +1,4 @@
-import Contact from "../models/ContactModel.js";
+import Contact from "../models/contactModel.js";
 
 const findContactByEmail = async (data) => {
   return await Contact.findOne(data);

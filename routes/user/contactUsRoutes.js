@@ -1,18 +1,18 @@
 import express from "express";
 import {
-  createContactController,
-  deleteContactController,
-  getAllContactsController,
-  getOneContactController,
-} from "../../controllers/user/contactUs.js";
+  createNewContact,
+  getOneContact,
+  getAllContacts,
+  deleteOneContact
+} from "../../controllers/user/contactUsController.js";
 
 import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 
 const router = express.Router();
 
-router.post("/contactus", createContactController);
-router.delete("/contactus/:id",authenticateLoginToken,deleteContactController);
-router.get("/contactus/:id", authenticateLoginToken, getOneContactController);
-router.get("/contactus", authenticateLoginToken, getAllContactsController);
+router.post("/contactus", createNewContact);
+router.get("/contactus/:id", authenticateLoginToken, getOneContact);
+router.get("/contactus", authenticateLoginToken, getAllContacts);
+router.delete("/contactus/:id", authenticateLoginToken, deleteOneContact);
 
 export default router;

@@ -1,10 +1,12 @@
 import jobs from "../../models/JobsModel.js";
-import { successResponse, badRequestResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
 import { analyzeCVAndJobDescription } from "../../helpers/grokIntegration.js";
-import pdfParse from "pdf-parse";
-import { SummarizerManager } from "node-summarizer";
 import Users from "../../models/userModel.js";
 import CvMatchers from "../../models/cvMatchersModel.js";
+import pdfParse from "pdf-parse";
+import { stringify } from "csv-stringify";
+import { SummarizerManager } from "node-summarizer";
+import mongoose from "mongoose";
 
 // Function to extract text from a PDF file
 const extractTextFromPDF = async (buffer) => {
@@ -19,15 +21,12 @@ const extractTextFromPDF = async (buffer) => {
 // Summarization function
 const summarizeText = async (text, maxLength = 1000) => {
     try {
-        // console.log("before text: ", text);
-        // console.log("maxLength", maxLength);
-
         while (text.split(/\s+/).length > maxLength) {
             const summarizer = new SummarizerManager(text, 5); // Summarize into 5 sentences
             const summary = await summarizer.getSummaryByFrequency();
             text = summary.summary;
         }
-        // console.log("after text", text);
+
         return text;
     } catch (err) {
         throw new Error("Error summarizing text: " + err.message);
@@ -74,7 +73,8 @@ const userCvMatching = async (req, res) => {
             jobWordCount = jobDescription.split(/\s+/).length;
         }
 
-        const result = await analyzeCVAndJobDescription(cvContent, jobDescription);
+        let result = await analyzeCVAndJobDescription(cvContent, jobDescription);
+        result = result?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");
 
         // Check if user already exists in cvMatchers
         let cvMatcher = await CvMatchers.findOne({ userId: user._id });
@@ -116,7 +116,7 @@ const userCvMatching = async (req, res) => {
 
         return successResponse(res, responseData, "CV matching process completed and results saved successfully.");
     } catch (error) {
-        console.error("Error in cv-matching:", error.message);
+        console.error("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, "Internal server error. Please try again later.");
     }
 };
@@ -129,18 +129,20 @@ const getOneCvMatcher = async (req, res) => {
             return notFoundResponse(res, "Id not provided", null);
         }
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return badRequestResponse(res, "Invalid ID format", null);
+        }
+
         const cvMatcherRecord = await CvMatchers.findById(id);
 
-        if (cvMatcherRecord) {
-            return successResponse(res, "Cv Matcher Record fetched successfully", cvMatcherRecord);
-        } else {
-            return notFoundResponse(res, "Record not found", null);
+        if (!cvMatcherRecord) {
+            return notFoundResponse(res, "Record not found in the database", null);
         }
+
+        return successResponse(res, "CV Matcher Record fetched successfully", cvMatcherRecord);
     } catch (error) {
-        return serverErrorResponse(
-            res,
-            "Internal server error. Please try again later"
-        );
+        console.error("Error Message in Catch BLock:", error.message);
+        return serverErrorResponse(res, "Internal server error. Please try again later.");
     }
 };
 
@@ -152,13 +154,13 @@ const getAllCvMatchers = async (req, res) => {
 
         const skip = (pageNumber - 1) * pageSize;
         const limit = parseInt(pageSize);
-        
+
         const getAllMatchers = await CvMatchers.find(filters).skip(skip).limit(limit);
         const totalMatchersCount = await CvMatchers.countDocuments(filters);
 
         return successResponse(res, 'CV matchers fetched successfully.', { matchers: getAllMatchers, totalMatchersCount, pageNumber: parseInt(pageNumber), pageSize: limit, });
     } catch (error) {
-        console.error('Error in getAllCvMatchers:', error.message);
+        console.error("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, 'Internal server error. Please try again later.');
     }
 };
@@ -183,17 +185,47 @@ const deleteCvMatcher = async (req, res) => {
         if (cvMatcherDelete) {
             return successResponse(res, "Cv Matcher deleted successfully", cvMatcherDelete);
         } else {
-            return serverErrorResponse(
-                res,
-                "Unable to delete record. Please try again later"
-            );
+            return serverErrorResponse(res, "Unable to delete record. Please try again later");
         }
     } catch (error) {
-        return serverErrorResponse(
-            res,
-            "Internal Server Error. Please try again later"
-        );
+        console.error("Error Message in Catch BLock:", error.message);
+        return serverErrorResponse(res, "Internal Server Error. Please try again later");
     }
 };
 
-export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher };
+const CvMatchersCSV = async (req, res) => {
+    try {
+        const getAllMatchers = await CvMatchers.find();
+        const jsonData = getAllMatchers;
+
+        if (!Array.isArray(jsonData) || jsonData.length === 0) {
+            return badRequestResponse(res, "Invalid data provided", null);
+        }
+
+        // Format data to include the "number" field as a string
+        const formattedData = jsonData.map((item) => ({
+            ...item,
+            number: `"${item.number}"`, // Ensure number is treated as a string in CSV
+        }));
+
+        // Convert to CSV using csv-stringify
+        stringify(formattedData, { header: true }, (err, csvData) => {
+            if (err) {
+                return serverErrorResponse(res, "Internal Server Error. Please try again later");
+            }
+
+            res.setHeader("Content-Type", "text/csv");
+            res.setHeader(
+                "Content-Disposition",
+                'attachment; filename="data.csv"'
+            );
+
+            return successResponse(res, "CSV created Successfully", csvData);
+        });
+    } catch (error) {
+        console.error("Error Message in Catch BLock:", error.message);
+        return serverErrorResponse(res, "Internal Server Error. Please try again later");
+    }
+};
+
+export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, CvMatchersCSV };

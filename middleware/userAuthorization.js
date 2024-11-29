@@ -1,12 +1,8 @@
+import { badRequestResponse, notFoundResponse, serverErrorResponse, unauthorizedResponse } from "../helpers/apiResponsesHelpers.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
-import {
-  badRequestResponse,
-  notFoundResponse,
-  serverErrorResponse,
-  unauthorizedResponse,
-} from "../helpers/apiResponsesHelpers.js";
+
 const authenticateLoginToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -27,7 +23,7 @@ const authenticateLoginToken = async (req, res, next) => {
     if (req.user.role !== "admin") {
       return unauthorizedResponse(res, "Access denied. Admin role required.", null);
     }
-    
+
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

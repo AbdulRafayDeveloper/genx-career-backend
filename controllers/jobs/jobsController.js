@@ -1,9 +1,10 @@
-import fetch from "node-fetch";
+
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
+import jobsTitleforFetching from '../../constants/jobsData.js';
+import { getDateFilter } from "../../helpers/jobsHelpers.js";
 import jobsModel from '../../models/jobsModel.js';
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
-import jobsTitleforFetching from '../../constants/jobsData.js';
-import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
-import { getDateFilter } from "../../helpers/jobsHelpers.js";
+import fetch from "node-fetch";
 import mongoose from "mongoose";
 const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
 const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;

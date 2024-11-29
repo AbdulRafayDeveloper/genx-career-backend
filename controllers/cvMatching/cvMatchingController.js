@@ -1,8 +1,8 @@
-import jobs from "../../models/JobsModel.js";
 import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
 import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText } from "../../helpers/cvMatchingHelpers.js";
-import Users from "../../models/usersModel.js";
-import CvMatchers from "../../models/cvMatchersModel.js";
+import usersModel from "../../models/usersModel.js";
+import jobsModel from "../../models/jobsModel.js";
+import cvMatchersModel from "../../models/cvMatchersModel.js";
 import { stringify } from "csv-stringify";
 import mongoose from "mongoose";
 
@@ -14,7 +14,7 @@ const userCvMatching = async (req, res) => {
             return badRequestResponse(res, "Please Login First to Match your CV", null);
         }
 
-        const user = await Users.findById(userId);
+        const user = await usersModel.findById(userId);
 
         if (!user) {
             return badRequestResponse(res, "User not found", null);
@@ -32,7 +32,7 @@ const userCvMatching = async (req, res) => {
             cvWordCount = content.split(/\s+/).length;
         }
 
-        const job = await jobs.findById(jobId);
+        const job = await jobsModel.findById(jobId);
 
         if (!job) {
             return badRequestResponse(res, "Job not found with the provided ID!");
@@ -50,7 +50,7 @@ const userCvMatching = async (req, res) => {
         result = result?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");
 
         // Check if user already exists in cvMatchers
-        let cvMatcher = await CvMatchers.findOne({ userId: user._id });
+        let cvMatcher = await cvMatchersModel.findOne({ userId: user._id });
 
         if (!cvMatcher) {
             // If no existing record, create a new one
@@ -106,7 +106,7 @@ const getOneCvMatcher = async (req, res) => {
             return badRequestResponse(res, "Invalid ID format", null);
         }
 
-        const cvMatcherRecord = await CvMatchers.findById(id);
+        const cvMatcherRecord = await cvMatchersModel.findById(id);
 
         if (!cvMatcherRecord) {
             return notFoundResponse(res, "Record not found in the database", null);
@@ -128,8 +128,8 @@ const getAllCvMatchers = async (req, res) => {
         const skip = (pageNumber - 1) * pageSize;
         const limit = parseInt(pageSize);
 
-        const getAllMatchers = await CvMatchers.find(filters).skip(skip).limit(limit);
-        const totalMatchersCount = await CvMatchers.countDocuments(filters);
+        const getAllMatchers = await cvMatchersModel.find(filters).skip(skip).limit(limit);
+        const totalMatchersCount = await cvMatchersModel.countDocuments(filters);
 
         return successResponse(res, 'CV matchers fetched successfully.', { matchers: getAllMatchers, totalMatchersCount, pageNumber: parseInt(pageNumber), pageSize: limit, });
     } catch (error) {
@@ -146,13 +146,13 @@ const deleteCvMatcher = async (req, res) => {
             return notFoundResponse(res, "Id not provided", null);
         }
 
-        const cvMatcherRecord = await CvMatchers.findById(id);
+        const cvMatcherRecord = await cvMatchersModel.findById(id);
 
         if (!cvMatcherRecord) {
             return notFoundResponse(res, "cv matcher record not found", null);
         }
 
-        const cvMatcherDelete = await CvMatchers.findByIdAndDelete(id);
+        const cvMatcherDelete = await cvMatchersModel.findByIdAndDelete(id);
 
         if (cvMatcherDelete) {
             return successResponse(res, "Cv Matcher deleted successfully", cvMatcherDelete);
@@ -167,7 +167,7 @@ const deleteCvMatcher = async (req, res) => {
 
 const CvMatchersCSV = async (req, res) => {
     try {
-        const getAllMatchers = await CvMatchers.find();
+        const getAllMatchers = await cvMatchersModel.find();
         const jsonData = getAllMatchers;
 
         if (!Array.isArray(jsonData) || jsonData.length === 0) {

@@ -1,27 +1,27 @@
-import Contact from "../models/contactsModel.js";
+import contactsModel from "../models/contactsModel.js";
 
 const findContactByEmail = async (data) => {
-  return await Contact.findOne(data);
+  return await contactsModel.findOne(data);
 };
 
 const createContact = async (data) => {
   const contact = new Contact(data);
-  await contact.save();
+  await contactsModel.save();
   return contact;
 };
 
 const getAllContacts = async () => {
-  const contacts = await Contact.find();
+  const contacts = await contactsModel.find();
   return contacts;
 };
 
 const getContactById = async (id) => {
-  const contact = await Contact.findById(id);
+  const contact = await contactsModel.findById(id);
   return contact;
 };
 
 const updateContactMessages = async (email, newMessage) => {
-  return await Contact.findOneAndUpdate(
+  return await contactsModel.findOneAndUpdate(
     { email },
     { $push: { messages: { message: newMessage } } },
     { new: true }
@@ -29,16 +29,16 @@ const updateContactMessages = async (email, newMessage) => {
 };
 
 const deleteContact = async (id) => {
-  const deletedContact = await Contact.findByIdAndDelete(id);
+  const deletedContact = await contactsModel.findByIdAndDelete(id);
   return deletedContact;
 };
 
 const countContacts = async (query) => {
-  return await Contact.countDocuments(query);
+  return await contactsModel.countDocuments(query);
 };
 
 const listContacts = async (query, skip, limit) => {
-  return await Contact.find(query)
+  return await contactsModel.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);

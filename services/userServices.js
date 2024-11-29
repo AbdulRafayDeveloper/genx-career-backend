@@ -1,42 +1,42 @@
-import User from "../models/usersModel.js";
+import usersModel from "../models/usersModel.js";
 
 const findUser = async (data) => {
-  const user = await User.exists(data);
+  const user = await usersModel.exists(data);
   return user;
 };
 
 const findOneUser = async (data) => {
-  const user = await User.findOne(data);
+  const user = await usersModel.findOne(data);
   return user;
 };
 
 const createUser = async (data) => {
   const user = new User(data);
-  await user.save();
+  await usersModel.save();
   return user;
 };
 
 const getAllUsers = async () => {
-  const users = await User.find();
+  const users = await usersModel.find();
   return users;
 };
 
 const getUserById = async (id) => {
-  const user = await User.findById(id);
+  const user = await usersModel.findById(id);
   return user;
 };
 
 const deleteUser = async (id) => {
-  const deletedUser = await User.findByIdAndDelete(id);
+  const deletedUser = await usersModel.findByIdAndDelete(id);
   return deletedUser;
 };
 
 const countUsers = async (query) => {
-  return await User.countDocuments(query);
+  return await usersModel.countDocuments(query);
 };
 
 const listUsers = async (query, skip, limit) => {
-  return await User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
+  return await usersModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 };
 export {
   findUser,

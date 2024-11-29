@@ -1,7 +1,7 @@
 import Groq from "groq-sdk";
 import dotenv from "dotenv";
-import { SummarizerManager } from "node-summarizer";
 import pdfParse from "pdf-parse";
+import { SummarizerManager } from "node-summarizer";
 
 dotenv.config();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });

@@ -1,5 +1,5 @@
-import userValidation from "../helpers/validations/usersValidation.js";
 import { badRequestResponse, serverErrorResponse, } from "../helpers/apiResponsesHelpers.js";
+import userValidation from "../helpers/validations/usersValidation.js";
 
 const validateUser = async (req, res, next) => {
   try {

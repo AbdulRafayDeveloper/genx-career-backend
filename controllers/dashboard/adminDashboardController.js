@@ -1,16 +1,16 @@
-import UsersCollection from '../../models/usersModel.js';
-import jobsModel from '../../models/jobsModel.js';
-import CvMatchersCollection from '../../models/cvMatchersModel.js';
-import ContactsUsCollection from '../../models/contactsModel.js';
 import { badRequestResponse, serverErrorResponse, successResponse } from "../../helpers/apiResponsesHelpers.js";
+import usersModel from '../../models/usersModel.js';
+import contactsModel from '../../models/contactsModel.js';
+import jobsModel from '../../models/jobsModel.js';
+import cvMatchersModel from '../../models/cvMatchersModel.js';
 
 const dashboardStats = async (req, res) => {
   try {
-    const totalUsers = await UsersCollection.countDocuments({ role: "user" });
+    const totalUsers = await usersModel.countDocuments({ role: "user" });
     const totalJobs = await jobsModel.countDocuments();
-    const totalCvMatchers = await CvMatchersCollection.countDocuments();
-    const totalContacts = await ContactsUsCollection.countDocuments();
-    const totalQueriesData = await ContactsUsCollection.aggregate([
+    const totalCvMatchers = await cvMatchersModel.countDocuments();
+    const totalContacts = await contactsModel.countDocuments();
+    const totalQueriesData = await contactsModel.aggregate([
       { $project: { messageCount: { $size: "$messages" } } },
       { $group: { _id: null, totalQueries: { $sum: "$messageCount" } } },
     ]);
@@ -54,7 +54,7 @@ const getUsersMonthly = async (req, res) => {
     const startOfMonth = new Date(year, month - 1, 1);
     const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const usersCreated = await UsersCollection.countDocuments({
+    const usersCreated = await usersModel.countDocuments({
       role: "user",
       createdAt: { $gte: startOfMonth, $lte: endOfMonth },
     });

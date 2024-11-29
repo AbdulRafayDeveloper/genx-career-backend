@@ -1,8 +1,9 @@
 import fetch from "node-fetch";
-import jobs from '../../models/JobsModel.js';
+import jobs from '../../models/jobsModel.js';
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import jobsTitleforFetching from '../../constants/jobsData.js';
-import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
+import { getDateFilter } from "../../helpers/jobsHelpers.js";
 import mongoose from "mongoose";
 const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
 const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
@@ -11,6 +12,7 @@ const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
 const scrapJobs = async (req, res) => {
   try {
     const pageNumberRecord = await JobsApiSettingModel.findById({ _id: JOB_SETTINGS_RECORD_ID });
+    
     let page = pageNumberRecord.pageNumber;
     page += 1;
 
@@ -88,7 +90,6 @@ const scrapJobs = async (req, res) => {
 
     // Bulk insert jobs to DB in one operation to reduce the number of database hits
     const savedJobs = await jobs.insertMany(jobsToSave, { ordered: false }).catch(e => console.error(e));
-
     savedJobsCount = savedJobs.length;
 
     // Return response summary with total count, saved jobs, and skipped jobs
@@ -184,34 +185,6 @@ const getAllJobs = async (req, res) => {
     return serverErrorResponse(res, 'Internal server error. Please try again later');
   }
 };
-
-function getDateFilter(datePosted) {
-  const currentDate = new Date();
-  let filterDate;
-
-  switch (datePosted) {
-    case 'last_day':
-      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 1));
-      break;
-    case 'last_3_days':
-      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 3));
-      break;
-    case 'last_week':
-      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 7));
-      break;
-    case 'last_2_weeks':
-      filterDate = new Date(currentDate.setDate(currentDate.getDate() - 14));
-      break;
-    case 'last_month':
-      filterDate = new Date(currentDate.setMonth(currentDate.getMonth() - 1));
-      break;
-    default:
-      filterDate = new Date(0); // Anytime (no filter)
-      break;
-  }
-
-  return filterDate;
-}
 
 const deleteJob = async (req, res) => {
   try {

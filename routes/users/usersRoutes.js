@@ -1,9 +1,5 @@
 import express from "express";
-import {
-  deleteUserController,
-  getAllUsersController,
-  getOneUserController,
-} from "../../controllers/user/usersController.js";
+import { getOneUserController, getAllUsersController, deleteUserController } from "../../controllers/users/usersController.js";
 import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 
 const router = express.Router();

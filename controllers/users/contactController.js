@@ -1,21 +1,6 @@
-import {
-  findContactByEmail,
-  createContact,
-  getContactById,
-  deleteContact,
-  countContacts,
-  listContacts,
-  updateContactMessages,
-} from "../../services/contactUsServices.js";
+import { findContactByEmail, createContact, getContactById, deleteContact, countContacts, listContacts, updateContactMessages } from "../../services/contactServices.js";
+import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
 import mongoose from "mongoose";
-
-import {
-  badRequestResponse,
-  notFoundResponse,
-  serverErrorResponse,
-  successResponse,
-  unauthorizedResponse,
-} from "../../helpers/apiResponses.js";
 
 const createNewContact = async (req, res) => {
   try {

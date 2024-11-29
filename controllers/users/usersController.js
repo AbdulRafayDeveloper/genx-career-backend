@@ -1,16 +1,5 @@
-import {
-  getUserById,
-  deleteUser,
-  countUsers,
-  listUsers,
-} from "../../services/userServices.js";
-import {
-  badRequestResponse,
-  notFoundResponse,
-  serverErrorResponse,
-  successResponse,
-  unauthorizedResponse,
-} from "../../helpers/apiResponses.js";
+import { getUserById, deleteUser, countUsers, listUsers } from "../../services/userServices.js";
+import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
 import mongoose from "mongoose";
 
 const getAllUsersController = async (req, res) => {

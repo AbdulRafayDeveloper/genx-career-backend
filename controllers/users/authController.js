@@ -1,17 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {
-  successResponse,
-  badRequestResponse,
-  notFoundResponse,
-  serverErrorResponse,
-  conflictResponse,
-} from "../../helpers/apiResponses.js";
-import {
-  findUser,
-  findOneUser,
-  createUser,
-} from "../../services/userServices.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse, conflictResponse, } from "../../helpers/apiResponsesHelpers.js";
+import { findUser, findOneUser, createUser } from "../../services/userServices.js";
 
 const registerUser = async (req, res) => {
   try {

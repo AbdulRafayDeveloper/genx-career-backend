@@ -1,37 +1,10 @@
 import jobs from "../../models/JobsModel.js";
-import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponses.js";
-import { analyzeCVAndJobDescription } from "../../helpers/grokIntegration.js";
-import Users from "../../models/userModel.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
+import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText } from "../../helpers/cvMatchingHelpers.js";
+import Users from "../../models/usersModel.js";
 import CvMatchers from "../../models/cvMatchersModel.js";
-import pdfParse from "pdf-parse";
 import { stringify } from "csv-stringify";
-import { SummarizerManager } from "node-summarizer";
 import mongoose from "mongoose";
-
-// Function to extract text from a PDF file
-const extractTextFromPDF = async (buffer) => {
-    try {
-        const data = await pdfParse(buffer);
-        return data.text; // Extracted text
-    } catch (err) {
-        throw new Error("Error extracting PDF text: " + err.message);
-    }
-};
-
-// Summarization function
-const summarizeText = async (text, maxLength = 1000) => {
-    try {
-        while (text.split(/\s+/).length > maxLength) {
-            const summarizer = new SummarizerManager(text, 5); // Summarize into 5 sentences
-            const summary = await summarizer.getSummaryByFrequency();
-            text = summary.summary;
-        }
-
-        return text;
-    } catch (err) {
-        throw new Error("Error summarizing text: " + err.message);
-    }
-};
 
 const userCvMatching = async (req, res) => {
     try {
@@ -179,7 +152,6 @@ const deleteCvMatcher = async (req, res) => {
             return notFoundResponse(res, "cv matcher record not found", null);
         }
 
-        // Delete the cv matcher
         const cvMatcherDelete = await CvMatchers.findByIdAndDelete(id);
 
         if (cvMatcherDelete) {

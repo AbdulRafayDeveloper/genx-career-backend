@@ -1,11 +1,5 @@
 import express from "express";
-import {
-  createNewContact,
-  getOneContact,
-  getAllContacts,
-  deleteOneContact
-} from "../../controllers/user/contactUsController.js";
-
+import { createNewContact, getOneContact, getAllContacts, deleteOneContact } from "../../controllers/users/contactController.js";
 import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 
 const router = express.Router();

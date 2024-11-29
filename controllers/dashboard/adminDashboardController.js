@@ -1,35 +1,21 @@
-import UsersCollection from '../../models/userModel.js';
-import JobsCollection from '../../models/JobsModel.js';
+import UsersCollection from '../../models/usersModel.js';
+import JobsCollection from '../../models/jobsModel.js';
 import CvMatchersCollection from '../../models/cvMatchersModel.js';
-import ContactsUsCollection from '../../models/contactModel.js';
-import {
-  badRequestResponse,
-  serverErrorResponse,
-  successResponse,
-} from "../../helpers/apiResponses.js";
+import ContactsUsCollection from '../../models/contactsModel.js';
+import { badRequestResponse, serverErrorResponse, successResponse } from "../../helpers/apiResponsesHelpers.js";
 
 const dashboardStats = async (req, res) => {
   try {
-    // 1. Fetch total users with the role "user"
     const totalUsers = await UsersCollection.countDocuments({ role: "user" });
-
-    // 2. Fetch total jobs from the Jobs collection
     const totalJobs = await JobsCollection.countDocuments();
-
-    // 3. Fetch total Cv Matchers from the CvMatchers collection
     const totalCvMatchers = await CvMatchersCollection.countDocuments();
-
-    // 4. Fetch total contact records (total users who contacted)
     const totalContacts = await ContactsUsCollection.countDocuments();
-
-    // 5. Fetch total queries (sum of all messages arrays' lengths in ContactsUsCollection)
     const totalQueriesData = await ContactsUsCollection.aggregate([
       { $project: { messageCount: { $size: "$messages" } } },
       { $group: { _id: null, totalQueries: { $sum: "$messageCount" } } },
     ]);
 
-    const totalQueries =
-      totalQueriesData.length > 0 ? totalQueriesData[0].totalQueries : 0;
+    const totalQueries = totalQueriesData.length > 0 ? totalQueriesData[0].totalQueries : 0;
 
     // 6. Fetch total CV Creators records
 

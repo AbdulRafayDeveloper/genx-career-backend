@@ -1,4 +1,4 @@
-import User from "../models/userModel.js";
+import User from "../models/usersModel.js";
 
 const findUser = async (data) => {
   const user = await User.exists(data);

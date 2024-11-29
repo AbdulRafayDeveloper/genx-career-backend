@@ -6,7 +6,7 @@ import {
   notFoundResponse,
   serverErrorResponse,
   unauthorizedResponse,
-} from "../helpers/apiResponses.js";
+} from "../helpers/apiResponsesHelpers.js";
 const authenticateLoginToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 

@@ -27,7 +27,7 @@ const scrapJobs = async (req, res) => {
       { $set: { pageNumber: page } }
     );
 
-    const limit = 10;
+    const limit = 1;
     const posted_at_max_age_days = 15;
     const include_total_results = false;
     const job_title_or = jobsTitleforFetching;

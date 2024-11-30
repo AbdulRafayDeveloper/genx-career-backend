@@ -46,8 +46,8 @@ const userCvMatching = async (req, res) => {
         let cvWordCount = cvContent.split(/\s+/).length;
 
         if (cvWordCount > 850) {
-            cvContent = await summarizeText(content, 850);
-            cvWordCount = content.split(/\s+/).length;
+            cvContent = await summarizeText(cvContent, 850);
+            cvWordCount = cvContent.split(/\s+/).length;
         }
 
         let jobDescription = job.description;

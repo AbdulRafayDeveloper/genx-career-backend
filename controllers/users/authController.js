@@ -46,6 +46,11 @@ const loginUser = async (req, res) => {
     }
 
     const user = await findOneUser({ email });
+
+    if (!user) {
+      return notFoundResponse(res, "This Account is not registered.", null);
+    }
+
     const passwordCheck = await bcrypt.compare(password, user.password);
 
     if (user && passwordCheck) {

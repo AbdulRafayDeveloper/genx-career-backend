@@ -1,12 +1,12 @@
-import express from "express";
-import { scrapJobs, getOneJob, deleteJob, getAllJobs } from "../../controllers/jobs/jobsController.js";
-import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
+// import express from "express";
+// import { scrapJobs, getOneJob, deleteJob, getAllJobs } from "../../controllers/jobs/jobsController.js";
+// import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 
-const router = express.Router();
+// const router = express.Router();
 
-router.get("/scrapJobs", scrapJobs);
-router.get("/jobs", getAllJobs);
-router.get("/job/:id", getOneJob);
-router.delete("/job/:id", authenticateLoginToken, deleteJob);
+// router.get("/scrapJobs", scrapJobs);
+// router.get("/jobs", getAllJobs);
+// router.get("/job/:id", getOneJob);
+// router.delete("/job/:id", authenticateLoginToken, deleteJob);
 
-export default router;
+// export default router;

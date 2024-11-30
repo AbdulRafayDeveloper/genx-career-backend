@@ -2,7 +2,7 @@
 import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
 // import jobsTitleforFetching from '../../constants/jobsData.js';
 // import { getDateFilter } from "../../helpers/jobsHelpers.js";
-import jobsModel from "../../models/jobsModel.js";
+import jobsModel from "../../models/jobListingsModel.js";
 // import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 // import fetch from "node-fetch";
 import mongoose from "mongoose";

@@ -1,15 +1,14 @@
 
-// import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
 // import jobsTitleforFetching from '../../constants/jobsData.js';
 // import { getDateFilter } from "../../helpers/jobsHelpers.js";
-// import jobs from '../../models/jobsModel.js';
+import jobsModel from "../../models/jobsModel.js";
 // import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 // import fetch from "node-fetch";
-// import mongoose from "mongoose";
-// import cvMatchersModel from "../../models/cvMatchersModel.js";
-// const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
-// const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
-// const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
+import mongoose from "mongoose";
+const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
+const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
+const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
 
 // const scrapJobs = async (req, res) => {
 //   try {
@@ -107,30 +106,30 @@
 //   }
 // };
 
-// const getOneJob = async (req, res) => {
-//   try {
-//     const id = req.params.id;
+const getOneJob = async (req, res) => {
+    try {
+        const id = req.params.id;
 
-//     if (!id) {
-//       return notFoundResponse(res, "Id not provided", null);
-//     }
+        if (!id) {
+            return notFoundResponse(res, "Id not provided", null);
+        }
 
-//     if (!mongoose.Types.ObjectId.isValid(id)) {
-//       return badRequestResponse(res, "Invalid ID format", null);
-//     }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return badRequestResponse(res, "Invalid ID format", null);
+        }
 
-//     const job = await jobsModel.findById(id);
+        const job = await jobsModel.findById(id);
 
-//     if (!job) {
-//       return notFoundResponse(res, "Record not found in the database", null);
-//     }
+        if (!job) {
+            return notFoundResponse(res, "Record not found in the database", null);
+        }
 
-//     return successResponse(res, "Record fetched successfully", job);
-//   } catch (error) {
-//     console.error("Error Message in Catch BLock:", error.message);
-//     return serverErrorResponse(res, "Internal server error. Please try again later.");
-//   }
-// };
+        return successResponse(res, "Record fetched successfully", job);
+    } catch (error) {
+        console.error("Error Message in Catch BLock:", error.message);
+        return serverErrorResponse(res, "Internal server error. Please try again later.");
+    }
+};
 
 // const getAllJobs = async (req, res) => {
 //   try {
@@ -248,3 +247,4 @@
 // };
 
 // export { scrapJobs, getOneJob, deleteJob, getAllJobs };
+export { getOneJob };

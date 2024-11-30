@@ -1,5 +1,7 @@
 import { findContactByEmail, createContact, getContactById, deleteContact, countContacts, listContacts, updateContactMessages } from "../../services/contactServices.js";
 import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
+import sendEmail from "../../helpers/emailHelpers/emailHelper.js";
+import generateThankYouTemplate from "../../helpers/emailHelpers/thankYouTemplate.js";
 import mongoose from "mongoose";
 
 const createNewContact = async (req, res) => {
@@ -16,6 +18,7 @@ const createNewContact = async (req, res) => {
       const updateContact = await updateContactMessages(email, message);
 
       if (updateContact) {
+        sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
         return successResponse(res, "You message send successfully", updateContact);
       } else {
         return serverErrorResponse(res, "Failed to send your message");
@@ -29,6 +32,7 @@ const createNewContact = async (req, res) => {
       });
 
       if (contact) {
+        sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
         return successResponse(res, "Message has been deleivered succcessfully", contact);
       } else {
         return serverErrorResponse(res, "Error while sending message");

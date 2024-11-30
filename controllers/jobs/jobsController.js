@@ -6,6 +6,7 @@ import jobsModel from '../../models/jobsModel.js';
 import JobsApiSettingModel from '../../models/JobsApiSettingModel.js';
 import fetch from "node-fetch";
 import mongoose from "mongoose";
+import cvMatchersModel from "../../models/cvMatchersModel.js";
 const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
 const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
 const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
@@ -13,7 +14,7 @@ const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
 const scrapJobs = async (req, res) => {
   try {
     const pageNumberRecord = await JobsApiSettingModel.findById({ _id: JOB_SETTINGS_RECORD_ID });
-    
+
     let page = pageNumberRecord.pageNumber;
     page += 1;
 
@@ -26,7 +27,7 @@ const scrapJobs = async (req, res) => {
       { $set: { pageNumber: page } }
     );
 
-    const limit = 1;
+    const limit = 10;
     const posted_at_max_age_days = 15;
     const include_total_results = false;
     const job_title_or = jobsTitleforFetching;
@@ -195,23 +196,51 @@ const deleteJob = async (req, res) => {
       return notFoundResponse(res, "Job Id not provided", null);
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
+    }
+
     const job = await jobsModel.findById(id);
 
     if (!job) {
       return notFoundResponse(res, "No Job found", null);
     }
 
-    // Delete the job
     const jobDelete = await jobsModel.findByIdAndDelete(id);
 
-    if (jobDelete) {
-      return successResponse(res, "Job deleted successfully", jobDelete);
-    } else {
-      return serverErrorResponse(
-        res,
-        "Unable to delete job. Please try again later"
-      );
+    if (!jobDelete) {
+      return serverErrorResponse(res, "Unable to delete Job. Please try again later");
     }
+
+    const jobId = id;
+    let deletedObjects = [];
+
+    const cvMatchers = await cvMatchersModel.find({
+      "result.jobId": jobId,
+    });
+
+    if (!cvMatchers.length) {
+      console.log("No matching users found.");
+    }
+
+    for (const user of cvMatchers) {
+      const matchingResultIndex = user.result.findIndex(
+        (item) => item.jobId.toString() === jobId
+      );
+
+      if (matchingResultIndex !== -1) {
+        if (user.result.length === 1) {
+          await cvMatchersModel.findByIdAndDelete(user._id);
+          console.log(`Deleted user: ${user.userName}`);
+        } else {
+          const [deletedResult] = user.result.splice(matchingResultIndex, 1);
+          await user.save();
+          deletedObjects.push(deletedResult);
+        }
+      }
+    }
+
+    return successResponse(res, "Job deleted successfully", jobDelete);
   } catch (error) {
     console.error("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal Server Error. Please try again later");

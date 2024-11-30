@@ -1,4 +1,5 @@
 import { getUserById, deleteUser, countUsers, listUsers } from "../../services/userServices.js";
+import cvMatchersModel from "../../models/cvMatchersModel.js";
 import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
 import mongoose from "mongoose";
 
@@ -7,7 +8,7 @@ const getAllUsersController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.limit) || 10;
     const searchQuery = req.query.search || "";
-    let query = {};
+    let query = { role: "user" };
 
     if (searchQuery) {
       query.$or = [
@@ -72,21 +73,31 @@ const deleteUserController = async (req, res) => {
       return unauthorizedResponse(res, "Id not provided", null);
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
+    }
+
     const user = await getUserById(id);
 
     if (!user) {
       return notFoundResponse(res, "The user is not found!", null);
     }
 
-    const userDelete = await deleteUser(user);
+    const userDelete = await deleteUser(user._id);
 
-    if (userDelete) {
-      return successResponse(res, "User deleted successfully", userDelete);
-    } else {
+    if (!userDelete) {
       return serverErrorResponse(res, "Unable to delete user. Please try again later");
     }
+
+    const deleteCvMatcher = await cvMatchersModel.findOneAndDelete({ userId: user._id });
+
+    if (!deleteCvMatcher) {
+      console.log("No CvMatcher found for this user.");
+    }
+
+    return successResponse(res, "User deleted successfully", userDelete);
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.error("Error in Catch Block:", error.message);
     return serverErrorResponse(res, "Internal Server Error. Please try again later");
   }
 };

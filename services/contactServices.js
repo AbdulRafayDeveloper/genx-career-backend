@@ -5,8 +5,8 @@ const findContactByEmail = async (data) => {
 };
 
 const createContact = async (data) => {
-  const contact = new Contact(data);
-  await contactsModel.save();
+  const contact = new contactsModel(data);
+  await contact.save();
   return contact;
 };
 

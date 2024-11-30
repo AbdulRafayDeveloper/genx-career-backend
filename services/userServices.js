@@ -11,8 +11,8 @@ const findOneUser = async (data) => {
 };
 
 const createUser = async (data) => {
-  const user = new User(data);
-  await usersModel.save();
+  const user = new usersModel(data);
+  await user.save();
   return user;
 };
 

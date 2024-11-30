@@ -4,9 +4,9 @@ import mongoose from "mongoose";
 
 const createNewContact = async (req, res) => {
   try {
-    const { email, subject, message } = req.body;
+    const { email, message } = req.body;
 
-    if (!email || !subject || !message) {
+    if (!email || !message) {
       return badRequestResponse(res, "All fields are mandatory", null);
     }
 
@@ -25,7 +25,6 @@ const createNewContact = async (req, res) => {
 
       const contact = await createContact({
         email,
-        subject,
         messages: [{ message }],
       });
 
@@ -110,6 +109,10 @@ const deleteOneContact = async (req, res) => {
       return unauthorizedResponse(res, "Id not provided", null);
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
+    }
+
     const contact = await getContactById(id);
 
     if (!contact) {
@@ -118,11 +121,11 @@ const deleteOneContact = async (req, res) => {
 
     const contactDelete = await deleteContact(contact);
 
-    if (contactDelete) {
-      return successResponse(res, "Contact deleted successfully", contactDelete);
-    } else {
+    if (!contactDelete) {
       return serverErrorResponse(res, "Unable to delete contact. Please try again later");
     }
+
+    return successResponse(res, "Contact deleted successfully", contactDelete);
   } catch (error) {
     console.error("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal Server Error. Please try again later");

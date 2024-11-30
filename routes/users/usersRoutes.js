@@ -5,7 +5,7 @@ import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 const router = express.Router();
 
 router.get("/users", authenticateLoginToken, getAllUsersController);
-router.get("/users/:id", authenticateLoginToken, getOneUserController);
+router.get("/users/:id", getOneUserController);
 router.delete("/users/:id", authenticateLoginToken, deleteUserController)
 
 export default router;

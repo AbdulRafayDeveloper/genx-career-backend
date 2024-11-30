@@ -14,10 +14,28 @@ const userCvMatching = async (req, res) => {
             return badRequestResponse(res, "Please Login First to Match your CV", null);
         }
 
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return badRequestResponse(res, "Invalid userId format", null);
+        }
+
+        if (!jobId) {
+            return badRequestResponse(res, "Please Login First to Match your CV", null);
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(jobId)) {
+            return badRequestResponse(res, "Invalid jobId format", null);
+        }
+
         const user = await usersModel.findById(userId);
 
         if (!user) {
-            return badRequestResponse(res, "User not found", null);
+            return badRequestResponse(res, "This user account not exist in Database", null);
+        }
+
+        const job = await jobsModel.findById(jobId);
+
+        if (!job) {
+            return badRequestResponse(res, "Job not found with the provided ID!");
         }
 
         if (!req.file) {
@@ -30,12 +48,6 @@ const userCvMatching = async (req, res) => {
         if (cvWordCount > 850) {
             cvContent = await summarizeText(content, 850);
             cvWordCount = content.split(/\s+/).length;
-        }
-
-        const job = await jobsModel.findById(jobId);
-
-        if (!job) {
-            return badRequestResponse(res, "Job not found with the provided ID!");
         }
 
         let jobDescription = job.description;
@@ -54,7 +66,7 @@ const userCvMatching = async (req, res) => {
 
         if (!cvMatcher) {
             // If no existing record, create a new one
-            cvMatcher = new CvMatchers({
+            cvMatcher = new cvMatchersModel({
                 userId: user._id,
                 userName: user.name,
                 userEmail: user.email,
@@ -146,6 +158,10 @@ const deleteCvMatcher = async (req, res) => {
             return notFoundResponse(res, "Id not provided", null);
         }
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return badRequestResponse(res, "Invalid ID format", null);
+        }
+
         const cvMatcherRecord = await cvMatchersModel.findById(id);
 
         if (!cvMatcherRecord) {
@@ -154,11 +170,11 @@ const deleteCvMatcher = async (req, res) => {
 
         const cvMatcherDelete = await cvMatchersModel.findByIdAndDelete(id);
 
-        if (cvMatcherDelete) {
-            return successResponse(res, "Cv Matcher deleted successfully", cvMatcherDelete);
-        } else {
+        if (!cvMatcherDelete) {
             return serverErrorResponse(res, "Unable to delete record. Please try again later");
         }
+
+        return successResponse(res, "Record deleted successfully", cvMatcherDelete);
     } catch (error) {
         console.error("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, "Internal Server Error. Please try again later");

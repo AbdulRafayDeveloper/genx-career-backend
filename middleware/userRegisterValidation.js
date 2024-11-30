@@ -1,9 +1,9 @@
 import { badRequestResponse, serverErrorResponse, } from "../helpers/apiResponsesHelpers.js";
-import userValidation from "../helpers/validations/usersValidation.js";
+import userRegisterFieldsValidation from "../helpers/validations/userRegisterFieldsValidation.js";
 
-const validateUser = async (req, res, next) => {
+const userRegisterValidation = async (req, res, next) => {
   try {
-    const { error } = await userValidation.validate(req.body, {
+    const { error } = await userRegisterFieldsValidation.validate(req.body, {
       abortEarly: false,
     });
 
@@ -18,4 +18,4 @@ const validateUser = async (req, res, next) => {
   }
 };
 
-export default validateUser;
+export default userRegisterValidation;

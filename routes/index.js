@@ -4,7 +4,7 @@ import userRoutes from './users/usersRoutes.js';
 import contactUsRoutes from './users/contactRoutes.js';
 import jobsRoutes from './jobs/jobsRoutes.js';
 import cvMatchingRoutes from './cvMatching/cvMatchingRoutes.js';
-// import adminDashboardRoutes from './dashboard/adminDashboardRoutes.js';
+import adminDashboardRoutes from './dashboard/adminDashboardRoutes.js';
 
 const router = express.Router();
 
@@ -19,6 +19,6 @@ router.use('/api', userRoutes);
 router.use('/api', contactUsRoutes);
 router.use('/api', jobsRoutes);
 router.use('/api', cvMatchingRoutes);
-// router.use('/api', adminDashboardRoutes);
+router.use('/api', adminDashboardRoutes);
 
 export default router;

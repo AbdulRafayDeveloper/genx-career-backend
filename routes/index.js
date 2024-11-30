@@ -9,9 +9,9 @@ import cvMatchingRoutes from './cvMatching/cvMatchingRoutes.js';
 const router = express.Router();
 
 // Just for Testing
-// router.get("/", (req, res) => {
-//     res.send('Main project backend is working now')
-// })
+router.get("/", (req, res) => {
+    res.send('Main project backend is working now')
+})
 
 // Attach all routes here
 router.use('/api', userAuthRoutes);

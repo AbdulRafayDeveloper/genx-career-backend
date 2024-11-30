@@ -216,4 +216,5 @@ const CvMatchersCSV = async (req, res) => {
     }
 };
 
-export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, CvMatchersCSV };
+export { getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, CvMatchersCSV };
+// export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, CvMatchersCSV };

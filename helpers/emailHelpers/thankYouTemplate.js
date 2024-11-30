@@ -11,7 +11,7 @@ const generateThankYouTemplate = () => `
         <!-- Body -->
         <div style="padding: 30px; background-color: #f9f9f9; font-size: 16px; line-height: 1.8;">
           <p style="margin: 0 0 15px;">Hi,</p>
-          <p style="margin: 0 0 15px;">Thank you for reaching out to **GenX Career**. We have received your message and our team will get back to you shortly.</p>
+          <p style="margin: 0 0 15px;">Thank you for reaching out to <strong>GenX Career</strong>. We have received your message and our team will get back to you shortly.</p>
           <p style="margin: 0 0 15px;">We are excited to help you explore IT job opportunities across multiple platforms and assist you with CV generation to match jobs with your skills.</p>
           <p style="margin: 0 0 15px;">Feel free to explore the amazing features on our platform while we respond to your query.</p>
           <p style="margin: 0 0 15px;">If you have additional questions, please don't hesitate to contact us again.</p>

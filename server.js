@@ -9,6 +9,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(express.static('public'));
 
 connectDb();
 const port = process.env.PORT || 8000;

@@ -9,11 +9,7 @@
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "server.js"
-        },
-        {
-            "src": "/logo.png",
-            "dest": "/logo.png"
+            "dest": "/"
         }
     ]
 }

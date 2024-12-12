@@ -6,11 +6,11 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_PASSWORD, 
+    pass: process.env.ADMIN_PASSWORD,
   },
 });
 
-const sendEmail = (to, subject, text) => {
+const sendEmail = async (to, subject, text) => {
   if (!to) {
     console.error("No recipients defined");
     return;
@@ -19,16 +19,26 @@ const sendEmail = (to, subject, text) => {
     from: process.env.ADMIN_EMAIL,
     to,
     subject,
-    html:text ,
+    html: text,
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Error sending email:", error);
-    } else {
-      console.log("Email sent:", info.response);
-    }
-  });
+  try {
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+          reject(err);
+        } else {
+          console.log("Email sent:", info.response);
+          resolve(info);
+        }
+      });
+    });
+    console.log("Email sent successfully");
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error("Error sending email");
+  }
 };
 
 export default sendEmail;

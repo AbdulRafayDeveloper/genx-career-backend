@@ -18,7 +18,7 @@ const createNewContact = async (req, res) => {
       const updateContact = await updateContactMessages(email, message);
 
       if (updateContact) {
-        sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
+        await sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
         return successResponse(res, "You message send successfully", updateContact);
       } else {
         return serverErrorResponse(res, "Failed to send your message");
@@ -32,7 +32,7 @@ const createNewContact = async (req, res) => {
       });
 
       if (contact) {
-        sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
+        await sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
         return successResponse(res, "Message has been deleivered succcessfully", contact);
       } else {
         return serverErrorResponse(res, "Error while sending message");

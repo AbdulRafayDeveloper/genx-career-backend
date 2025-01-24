@@ -137,7 +137,7 @@ const exportContactsToExcel = async (req, res) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
     const buffer = Buffer.from(excelBuffer, "binary");
-    res.setHeader("Content-Disposition", "attachment; filename=Contacts_Export.xlsx");
+    res.setHeader("Content-Disposition", "attachment; filename=UsersQueries_List.xlsx");
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     res.send(buffer);

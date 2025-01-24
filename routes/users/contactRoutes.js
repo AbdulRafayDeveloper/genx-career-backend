@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post("/contactus", newContactValidation, createNewContact);
 router.get("/contactus/:id", authenticateLoginToken, getOneContact);
-router.get("/contactus/export", authenticateLoginToken, exportContactsToExcel);
+router.get("/contactUsList/export", authenticateLoginToken, exportContactsToExcel);
 router.get("/contactus", authenticateLoginToken, getAllContacts);
 router.delete("/contactus/:id", authenticateLoginToken, deleteOneContact);
 

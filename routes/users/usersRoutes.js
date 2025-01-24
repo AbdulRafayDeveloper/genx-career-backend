@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/users", authenticateLoginToken, getAllUsersController);
 router.get("/users/:id", getOneUserController);
-router.get("/usersList/export", exportUsersToExcel);
+router.get("/usersList/export", authenticateLoginToken, exportUsersToExcel);
 router.delete("/user/:id", authenticateLoginToken, deleteUserController)
 
 export default router;

@@ -3,8 +3,8 @@ import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText } from ".
 import usersModel from "../../models/usersModel.js";
 import jobsModel from "../../models/jobListingsModel.js";
 import cvMatchersModel from "../../models/cvMatchersModel.js";
-import { stringify } from "csv-stringify";
 import mongoose from "mongoose";
+import XLSX from "xlsx";
 
 const userCvMatching = async (req, res) => {
     try {
@@ -47,7 +47,7 @@ const userCvMatching = async (req, res) => {
         if (!cvContent.trim()) {
             return badRequestResponse(res, "The uploaded CV has no readable content.", null);
         }
-        
+
         console.log("cvContent: cvContent", cvContent);
         let cvWordCount = cvContent.split(/\s+/).length;
 
@@ -141,9 +141,9 @@ const getOneCvMatcher = async (req, res) => {
 
 const getAllCvMatchers = async (req, res) => {
     try {
-        const { pageNumber = 1, pageSize = 15, search = '' } = req.query;
+        const { pageNumber = 1, pageSize = 5, search = '' } = req.query;
 
-        const filters = search ? { userName: { $regex: search, $options: 'i' } } : {};
+        const filters = search ? { userEmail: { $regex: search, $options: 'i' } } : {};
 
         const skip = (pageNumber - 1) * pageSize;
         const limit = parseInt(pageSize);
@@ -189,39 +189,36 @@ const deleteCvMatcher = async (req, res) => {
     }
 };
 
-const CvMatchersCSV = async (req, res) => {
+const exportCvMatchersToExcel = async (req, res) => {
     try {
-        const getAllMatchers = await cvMatchersModel.find();
-        const jsonData = getAllMatchers;
+        const users = await cvMatchersModel.find({});
 
-        if (!Array.isArray(jsonData) || jsonData.length === 0) {
-            return badRequestResponse(res, "Invalid data provided", null);
+        console.log("users", users);
+
+        if (!users.length) {
+            return successResponse(res, "No users found to export.", []);
         }
 
-        // Format data to include the "number" field as a string
-        const formattedData = jsonData.map((item) => ({
-            ...item,
-            number: `"${item.number}"`, // Ensure number is treated as a string in CSV
+        const usersData = users.map((user) => ({
+            UserName: user.userName || "N/A",
+            UserEmail: user.userEmail || "N/A",
         }));
 
-        // Convert to CSV using csv-stringify
-        stringify(formattedData, { header: true }, (err, csvData) => {
-            if (err) {
-                return serverErrorResponse(res, "Internal Server Error. Please try again later");
-            }
+        console.log("usersData", usersData);
 
-            res.setHeader("Content-Type", "text/csv");
-            res.setHeader(
-                "Content-Disposition",
-                'attachment; filename="data.csv"'
-            );
+        const worksheet = XLSX.utils.json_to_sheet(usersData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Cv Matchers");
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+        const buffer = Buffer.from(excelBuffer, "binary");
+        res.setHeader("Content-Disposition", "attachment; filename=CvMatchers_List.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
-            return successResponse(res, "CSV created Successfully", csvData);
-        });
+        res.send(buffer);
     } catch (error) {
-        console.error("Error Message in Catch BLock:", error.message);
-        return serverErrorResponse(res, "Internal Server Error. Please try again later");
+        console.error("Error exporting users to Excel:", error.message);
+        return serverErrorResponse(res, "Failed to export users to Excel. Please try again later.");
     }
 };
 
-export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, CvMatchersCSV };
+export { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, exportCvMatchersToExcel };

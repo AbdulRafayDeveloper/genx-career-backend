@@ -1,7 +1,9 @@
 import { getUserById, deleteUser, countUsers, listUsers } from "../../services/userServices.js";
 import cvMatchersModel from "../../models/cvMatchersModel.js";
+import usersModel from "../../models/usersModel.js";
 import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
 import mongoose from "mongoose";
+import XLSX from "xlsx";
 
 const getAllUsersController = async (req, res) => {
   try {
@@ -102,4 +104,34 @@ const deleteUserController = async (req, res) => {
   }
 };
 
-export { getAllUsersController, getOneUserController, deleteUserController };
+const exportUsersToExcel = async (req, res) => {
+  try {
+    console.log("exportUsersToExcel");
+    const users = await usersModel.find({});
+
+    if (!users.length) {
+      return successResponse(res, "No users found to export.", []);
+    }
+
+    const usersData = users.map((user) => ({
+      Name: user.name || "N/A",
+      Email: user.email || "N/A",
+      RegisterDate: user.createdAt ? user.createdAt.toISOString().split("T")[0] : "N/A"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(usersData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+    const buffer = Buffer.from(excelBuffer, "binary");
+    res.setHeader("Content-Disposition", "attachment; filename=Users_List.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    res.send(buffer);
+  } catch (error) {
+    console.error("Error exporting contacts to Excel:", error.message);
+    return serverErrorResponse(res, "Failed to export contacts to Excel. Please try again later.");
+  }
+};
+
+export { getAllUsersController, getOneUserController, deleteUserController, exportUsersToExcel };

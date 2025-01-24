@@ -1,28 +1,23 @@
 import mongoose from "mongoose";
 
-const MessageSchema = new mongoose.Schema(
-    {
-        message: {
-            type: String,
-            required: true,
-        },
-    },
-    {
-        timestamps: true,
-    }
-);
-
 const ContactUsSchema = new mongoose.Schema(
-    {
-        email: {
-            type: String,
-            required: true,
-        },
-        messages: [MessageSchema],
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    {
-        timestamps: true,
-    }
+    email: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
 export default mongoose.model("Contact", ContactUsSchema);

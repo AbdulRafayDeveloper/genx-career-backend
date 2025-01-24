@@ -18,17 +18,6 @@ const userLoginFieldsValidation = Joi.object({
       "string.base": `Password must be in the form of a string`,
       "string.min": `Password must have at least 8 characters`,
     }),
-
-  confirmPassword: Joi.string()
-    .min(8)
-    .required()
-    .valid(Joi.ref("password"))
-    .messages({
-      "string.empty": `Confirm password must not be empty`,
-      "string.base": `Confirm password must be in the form of a string`,
-      "string.min": `Confirm password must have at least 8 characters`,
-      "any.only": `Password and confirm password must match`,
-    }),
 });
 
 export default userLoginFieldsValidation;

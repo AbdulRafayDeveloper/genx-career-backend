@@ -2,45 +2,27 @@ import { findContactByEmail, createContact, getContactById, deleteContact, count
 import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
 import sendEmail from "../../helpers/emailHelpers/emailHelper.js";
 import generateThankYouTemplate from "../../helpers/emailHelpers/thankYouTemplate.js";
+import contactsModel from "../../models/contactsModel.js";
 import mongoose from "mongoose";
+import XLSX from "xlsx";
 
 const createNewContact = async (req, res) => {
   try {
-    const { email, message } = req.body;
+    const { name, email, message } = req.body;
 
-    if (!email || !message) {
+    if (!name || !email || !message) {
       return badRequestResponse(res, "All fields are mandatory", null);
     }
+    const contact = await createContact({ name, email, message });
 
-    const existingContact = await findContactByEmail({ email });
-
-    if (existingContact) {
-      const updateContact = await updateContactMessages(email, message);
-
-      if (updateContact) {
-        await sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
-        return successResponse(res, "You message send successfully", updateContact);
-      } else {
-        return serverErrorResponse(res, "Failed to send your message");
-      }
-
+    if (contact) {
+      await sendEmail(email, "Thanks for Contacting Us!", generateThankYouTemplate());
+      return successResponse(res, "Message has been delivered successfully", contact);
     } else {
-
-      const contact = await createContact({
-        email,
-        messages: [{ message }],
-      });
-
-      if (contact) {
-        await sendEmail(email, "Thanks for Contacting Us", generateThankYouTemplate());
-        return successResponse(res, "Message has been deleivered succcessfully", contact);
-      } else {
-        return serverErrorResponse(res, "Error while sending message");
-      }
+      return serverErrorResponse(res, "Error while sending message");
     }
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
-    return serverErrorResponse(res, "Internal Server error Please try again later");
+    return serverErrorResponse(error, "Internal Server Error. Please try again later.");
   }
 };
 
@@ -136,4 +118,33 @@ const deleteOneContact = async (req, res) => {
   }
 };
 
-export { createNewContact, getOneContact, getAllContacts, deleteOneContact };
+const exportContactsToExcel = async (req, res) => {
+  try {
+    const contacts = await contactsModel.find({});
+
+    if (!contacts.length) {
+      return successResponse(res, "No contacts found to export.", []);
+    }
+
+    const contactsData = contacts.map((contactUser) => ({
+      Name: contactUser.name || "N/A",
+      Email: contactUser.email || "N/A",
+      Message: contactUser.message || "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(contactsData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+    const buffer = Buffer.from(excelBuffer, "binary");
+    res.setHeader("Content-Disposition", "attachment; filename=Contacts_Export.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    res.send(buffer);
+  } catch (error) {
+    console.error("Error exporting contacts to Excel:", error.message);
+    return serverErrorResponse(res, "Failed to export contacts to Excel. Please try again later.");
+  }
+};
+
+export { createNewContact, getOneContact, getAllContacts, deleteOneContact, exportContactsToExcel };

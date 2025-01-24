@@ -28,21 +28,21 @@ const analyzeCVAndJobDescription = async (cvContent, jobDescription) => {
                 {
                     role: "user",
                     content: `Analyze the following CV content and job description. 
-          1. Provide a one-word rating (Not Good, Good, Best) based on how well the CV matches the job description.
-          2. Suggestions for improvements to make the CV better match the job description.
-          3. List what matches and what does not match in separate paragraphs.
-
-          CV Content: "${cvContent}"
-          Job Description: "${jobDescription}"`,
+                        1. Provide a one-word rating (Not Good, Good, Best) based on how well the CV matches the job description. The heading for this must be exactly "Rating". Do not use any other heading.
+                        2. Provide suggestions for improvements to make the CV better match the job description.
+                        3. Under the headings "Matches" and "Non-Matches," list what matches and what does not match in separate paragraphs.
+        
+                        CV Content: "${cvContent}"
+                        Job Description: "${jobDescription}"`,
                 },
             ],
             model: "llama3-8b-8192",
         });
 
-        const responseContent =
+        const analysis =
             chatCompletion.choices[0]?.message?.content || "No response from Groq";
 
-        return responseContent;
+        return analysis;
     } catch (error) {
         console.error("Error in analyzeCVAndJobDescription:", error);
         return { status: 500, message: "Internal server error. Please try again later" };

@@ -9,7 +9,7 @@ const userRegisterValidation = async (req, res, next) => {
 
     if (error) {
       const errorMessages = error.details.map((err) => err.message);
-      return badRequestResponse(res, "Validation Error", errorMessages);
+      return badRequestResponse(res, `Validation Error: ${errorMessages}`, null);
     }
 
     next();

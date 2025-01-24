@@ -43,6 +43,12 @@ const userCvMatching = async (req, res) => {
         }
 
         let cvContent = await extractTextFromPDF(req.file.buffer);
+
+        if (!cvContent.trim()) {
+            return badRequestResponse(res, "The uploaded CV has no readable content.", null);
+        }
+        
+        console.log("cvContent: cvContent", cvContent);
         let cvWordCount = cvContent.split(/\s+/).length;
 
         if (cvWordCount > 850) {
@@ -57,6 +63,8 @@ const userCvMatching = async (req, res) => {
             jobDescription = await summarizeText(jobDescription, 500);
             jobWordCount = jobDescription.split(/\s+/).length;
         }
+
+        console.log("cvContent: cvContent", cvContent);
 
         let result = await analyzeCVAndJobDescription(cvContent, jobDescription);
         result = result?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");

@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 const THEIR_STACK_API_URL = process.env.THEIR_STACK_API_URL;
 const THEIR_STACK_TOKEN = process.env.THEIR_STACK_TOKEN;
 const JOB_SETTINGS_RECORD_ID = process.env.JOB_SETTINGS_RECORD_ID;
+import XLSX from "xlsx";
 
 const scrapJobs = async (req, res) => {
   try {
@@ -27,7 +28,7 @@ const scrapJobs = async (req, res) => {
       { $set: { pageNumber: page } }
     );
 
-    const limit = 1;
+    const limit = 10;
     const posted_at_max_age_days = 15;
     const include_total_results = false;
     const job_title_or = jobsTitleforFetching;
@@ -108,28 +109,28 @@ const scrapJobs = async (req, res) => {
 };
 
 const getOneJob = async (req, res) => {
-    try {
-        const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-        if (!id) {
-            return notFoundResponse(res, "Id not provided", null);
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return badRequestResponse(res, "Invalid ID format", null);
-        }
-
-        const job = await jobsModel.findById(id);
-
-        if (!job) {
-            return notFoundResponse(res, "Record not found in the database", null);
-        }
-
-        return successResponse(res, "Record fetched successfully", job);
-    } catch (error) {
-        console.error("Error Message in Catch BLock:", error.message);
-        return serverErrorResponse(res, "Internal server error. Please try again later.");
+    if (!id) {
+      return notFoundResponse(res, "Id not provided", null);
     }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
+    }
+
+    const job = await jobsModel.findById(id);
+
+    if (!job) {
+      return notFoundResponse(res, "Record not found in the database", null);
+    }
+
+    return successResponse(res, "Record fetched successfully", job);
+  } catch (error) {
+    console.error("Error Message in Catch BLock:", error.message);
+    return serverErrorResponse(res, "Internal server error. Please try again later.");
+  }
 };
 
 const getAllJobs = async (req, res) => {
@@ -247,4 +248,51 @@ const deleteJob = async (req, res) => {
   }
 };
 
-export { scrapJobs, getOneJob, deleteJob, getAllJobs };
+const exportJobsToExcel = async (req, res) => {
+  try {
+    const jobs = await jobsModel.find({});
+
+    if (!jobs.length) {
+      return successResponse(res, "No jobs found to export.", []);
+    }
+
+    const jobsData = jobs.map((job) => ({
+      JobTitle: job.title || "N/A",
+      Location: job.location || "N/A",
+      Country: job.country || "N/A",
+      Salary: job.salary || "Not Disclosed",
+      MinAnnualSalary: job.minAnnualSalary || "N/A",
+      MaxAnnualSalary: job.maxAnnualSalary || "N/A",
+      SalaryCurrency: job.salaryCurrency || "N/A",
+      Industry: job.industry || "N/A",
+      Description: job.description || "N/A",
+      PostedDate: job.jobPostDate ? job.jobPostDate.toISOString().split("T")[0] : "N/A",
+      ApplyUrl: job.applyUrl || "N/A",
+      CompanyName: job.companyName || "N/A",
+      SourceUrl: job.sourceUrl || "N/A",
+      StateCode: job.stateCode || "N/A",
+      Remote: job.remote ? "Yes" : "No",
+      Hybrid: job.hybrid ? "Yes" : "No",
+      Seniority: job.seniority || "N/A",
+      CompanyLogoLink: job.companyLogoLink || "N/A",
+      CompanyUrl: job.companyUrl || "N/A",
+      NumberOfJobs: job.numberOfJobs || "N/A",
+      FoundedYear: job.foundedYear || "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(jobsData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Jobs");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+    const buffer = Buffer.from(excelBuffer, "binary");
+    res.setHeader("Content-Disposition", "attachment; filename=Jobs_Export.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    res.send(buffer);
+  } catch (error) {
+    console.error("Error exporting jobs to Excel:", error.message);
+    return serverErrorResponse(res, "Failed to export jobs to Excel. Please try again later.");
+  }
+};
+
+export { scrapJobs, getOneJob, deleteJob, getAllJobs, exportJobsToExcel };

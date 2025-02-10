@@ -10,6 +10,9 @@ const userCvMatching = async (req, res) => {
     try {
         const { userId, jobId } = req.body;
 
+        console.log("userId: ", userId);
+        console.log("jobId: ", jobId);
+
         if (!userId) {
             return badRequestResponse(res, "Please Login First to Match your CV", null);
         }
@@ -28,11 +31,15 @@ const userCvMatching = async (req, res) => {
 
         const user = await usersModel.findById(userId);
 
+        console.log("user: ", user);
+
         if (!user) {
             return badRequestResponse(res, "This user account not exist in Database", null);
         }
 
         const job = await jobsModel.findById(jobId);
+
+        console.log("job: ", job);
 
         if (!job) {
             return badRequestResponse(res, "Job not found with the provided ID!");
@@ -42,9 +49,14 @@ const userCvMatching = async (req, res) => {
             return badRequestResponse(res, "No file uploaded. Kindly upload a file!");
         }
 
+        console.log("req.file: ", req.file)
+
         let cvContent = await extractTextFromPDF(req.file.buffer);
 
+        console.log("cvContent: ", cvContent.trim());
+
         if (!cvContent.trim()) {
+            console.log("cvContent 3: ", cvContent.trim());
             return badRequestResponse(res, "The uploaded CV has no readable content.", null);
         }
 

@@ -153,19 +153,40 @@ const getAllJobs = async (req, res) => {
       filters.remote = true;
     }
 
+    console.log("datePosted: ", datePosted);
+
     // Date posted filter (custom logic for last X days, weeks, months, etc.)
     if (datePosted !== 'anytime') {
       const dateFilter = getDateFilter(datePosted);
+      console.log("dateFilter: ", dateFilter);
       if (dateFilter) {
         filters.jobPostDate = { $gte: dateFilter };
       }
     }
 
     // Salary range filter
+    // if (minSalary || maxSalary) {
+    //   filters.minAnnualSalary = {};
+    //   if (minSalary) filters.minAnnualSalary.$gte = parseInt(minSalary);
+    //   if (maxSalary) filters.minAnnualSalary.$lte = parseInt(maxSalary);
+    // }
     if (minSalary || maxSalary) {
-      filters.minAnnualSalary = {};
-      if (minSalary) filters.minAnnualSalary.$gte = parseInt(minSalary);
-      if (maxSalary) filters.minAnnualSalary.$lte = parseInt(maxSalary);
+      // Parse values in base 10
+      const min = parseInt(minSalary, 10);
+      const max = parseInt(maxSalary, 10);
+      const salaryFilter = {};
+
+      // Only add the filter if the parsed number is valid (i.e. not NaN)
+      if (!isNaN(min)) {
+        salaryFilter.$gte = min;
+      }
+      if (!isNaN(max)) {
+        salaryFilter.$lte = max;
+      }
+      // Only add the salary filter if at least one of the values is valid.
+      if (Object.keys(salaryFilter).length > 0) {
+        filters.minAnnualSalary = salaryFilter;
+      }
     }
 
     // Pagination logic
@@ -188,6 +209,76 @@ const getAllJobs = async (req, res) => {
     return serverErrorResponse(res, 'Internal server error. Please try again later');
   }
 };
+
+// const getAllJobs = async (req, res) => {
+//   try {
+//     // Destructure query parameters with defaults
+//     const {
+//       pageNumber = 1,
+//       pageSize = 15,
+//       search = '',
+//       location = '',
+//       remote = '',
+//       datePosted = 'anytime', // Can be 'anytime', one of our keywords, or a date string
+//       minSalary,
+//       maxSalary,
+//     } = req.query;
+
+//     // Build filters object for the Mongo query
+//     const filters = {};
+
+//     // Search filter (using regex for case-insensitive matching)
+//     if (search) {
+//       filters.title = { $regex: search, $options: 'i' };
+//     }
+
+//     // Location filter (exact match)
+//     if (location) {
+//       filters.location = location;
+//     }
+
+//     // Remote filter (exact match)
+//     if (remote === 'true') {
+//       filters.remote = true;
+//     }
+
+//     console.log("datePosted from query:", datePosted);
+//     // Date posted filter: if not "anytime", then use our helper to compute the date
+//     if (datePosted !== 'anytime') {
+//       const dateFilter = getDateFilter(datePosted);
+//       console.log("Computed dateFilter:", dateFilter);
+//       // If a valid date is returned, filter jobs with jobPostDate >= dateFilter
+//       if (dateFilter) {
+//         filters.jobPostDate = { $gte: dateFilter };
+//       }
+//     }
+
+//     // Salary range filter
+//     if (minSalary || maxSalary) {
+//       filters.minAnnualSalary = {};
+//       if (minSalary) filters.minAnnualSalary.$gte = parseInt(minSalary, 10);
+//       if (maxSalary) filters.minAnnualSalary.$lte = parseInt(maxSalary, 10);
+//     }
+
+//     // Pagination calculations
+//     const skip = (parseInt(pageNumber, 10) - 1) * parseInt(pageSize, 10);
+//     const limit = parseInt(pageSize, 10);
+
+//     // Fetch jobs with filters and pagination
+//     const jobs = await jobsModel.find(filters).skip(skip).limit(limit);
+//     const totalJobsCount = await jobsModel.countDocuments(filters);
+
+//     return successResponse(res, 'Jobs fetched successfully.', {
+//       jobs,
+//       totalJobsCount,
+//       pageNumber: parseInt(pageNumber, 10),
+//       pageSize: limit,
+//     });
+//   } catch (error) {
+//     console.error("Error in getAllJobs:", error.message);
+//     return serverErrorResponse(res, 'Internal server error. Please try again later');
+//   }
+// };
 
 const deleteJob = async (req, res) => {
   try {

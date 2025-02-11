@@ -148,6 +148,8 @@ const getAllJobs = async (req, res) => {
       filters.location = location;
     }
 
+    console.log("remote: ", remote);
+
     // Remote filter (exact match)
     if (remote === 'true') {
       filters.remote = true;
@@ -190,6 +192,8 @@ const getAllJobs = async (req, res) => {
     // Fetch jobs with the provided filters and pagination
     const getAllJobs = await jobsModel.find(filters).skip(skip).limit(limit);
     const totalJobsCount = await jobsModel.countDocuments(filters);
+
+    console.log("getAllJobs: ", getAllJobs);
 
     return successResponse(res, 'Jobs fetched successfully.', {
       getAllJobs,

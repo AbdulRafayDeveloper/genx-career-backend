@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>{{name}} - Resume</title>
+	<style>
+		@page {
+			margin-top: 30mm;
+			size: A4;
+			margin: 0;
+		}
+
+		body {
+			font-family: 'Georgia', serif;
+			margin: 0;
+		}
+
+		.cv-container {
+			background: #fff;
+			width: 100%;
+			max-width: 800px;
+			margin: 0 auto;
+			padding: 40px;
+		}
+
+		.education-item h3,
+		.education-item p {
+			margin: 2px 0;
+		}
+
+
+		h1 {
+			font-size: 24px;
+			margin: 0;
+			text-align: center;
+			font-weight: bold;
+		}
+
+		.contact-info {
+			text-align: center;
+			font-size: 14px;
+			margin: 5px 0 20px 0;
+			color: #555;
+		}
+
+		.section-title {
+			font-weight: bold;
+			text-transform: uppercase;
+			font-size: 14px;
+			margin: 20px 0 10px;
+			border-bottom: 1px solid #999;
+			padding-bottom: 4px;
+		}
+
+		.section-content {
+			font-size: 14px;
+			line-height: 1.7;
+			color: #444;
+			text-align: justify;
+		}
+
+		.job {
+			margin-bottom: 15px;
+		}
+
+		.job-title {
+			font-weight: bold;
+		}
+
+		.job-company {
+			font-style: italic;
+			margin: 2px 0;
+		}
+
+		ul {
+			margin: 5px 0 0 0;
+			padding-left: 15px;
+		}
+
+		ul li {
+			margin-bottom: 5px;
+		}
+
+		.education-entry {
+			margin-bottom: 10px;
+		}
+
+		.project {
+			margin-bottom: 10px;
+		}
+
+		.skills-list {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: flex;
+			flex-wrap: wrap;
+		}
+
+		.skills-list li {
+			background: #eee;
+			margin: 5px;
+			padding: 5px 10px;
+			border-radius: 5px;
+		}
+
+		.certificate {
+			margin-bottom: 5px;
+		}
+
+		.skills {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+
+		}
+	</style>
+</head>
+
+<body>
+
+	<div class="cv-container">
+
+		<h1>{{name}}</h1>
+		{{{contact}}}
+
+		<div class="section-title">Profile</div>
+		<p class="section-content">
+			{{summary}}
+		</p>
+
+		<div class="section-title">Education</div>
+		<div class="section-content">
+			{{{education}}}
+		</div>
+
+
+		<section>
+			{{{experience}}}
+		</section>
+
+		<div class="section-title">Skills</div>
+		<div class="section-content skills">
+			{{{skills}}}
+		</div>
+
+
+		<section>
+			{{{projects}}}
+		</section>
+
+
+		<section>
+			{{{certificates}}}
+		</section>
+
+		<div class="section-title">Languages</div>
+		<div class="section-content">
+			<ul>
+
+				<li>{{{languages}}}</li>
+
+			</ul>
+		</div>
+
+
+		<section>
+			{{{interests}}}
+		</section>
+
+	</div>
+
+</body>
+
+</html>

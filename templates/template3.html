@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>{{name}} - CV</title>
+	<style>
+		@page {
+			size: A4;
+			margin: 0;
+		}
+
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			color: #333;
+			background: white;
+			font-family: Arial, sans-serif;
+		}
+
+		.cv-container {
+			width: 100%;
+			height: 100%;
+			padding: 20px;
+			box-sizing: border-box;
+			background: white;
+		}
+
+		.header {
+			display: flex;
+			align-items: center;
+			gap: 20px;
+			padding: 20px;
+			background: var(--main-color, #f7f7f7);
+			border-bottom: 4px solid var(--dark-color, #6d597a);
+		}
+
+		.header img {
+			width: 100px;
+			height: 100px;
+			border-radius: 50%;
+			object-fit: cover;
+			border: 3px solid var(--dark-color, #6d597a);
+		}
+
+		.header-content h1 {
+			margin: 0;
+			font-size: 28px;
+
+		}
+
+		.header-content p {
+			font-size: 14px;
+			margin: 5px 0;
+		}
+
+		.contact {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 15px;
+			margin-top: 10px;
+		}
+
+		.contact div {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			font-size: 14px;
+		}
+
+		.contact a {
+			color: #303b4d;
+			text-decoration: none;
+			font-weight: bold;
+		}
+
+		.content section {
+			margin-bottom: 20px;
+		}
+
+		h2 {
+			color: var(--dark-color, #6d597a);
+			font-size: 20px;
+			border-bottom: 2px solid var(--dark-color, #6d597a);
+			padding-bottom: 5px;
+		}
+
+		.section-content p,
+		.section-content div {
+			font-size: 14px;
+			margin: 5px 0;
+		}
+
+		.skills span,
+		.interests span {
+			display: inline-block;
+			background: #e1e5e8;
+			color: #303b4d;
+			padding: 6px 12px;
+			margin: 3px;
+			border-radius: 15px;
+			font-size: 14px;
+		}
+
+		.content .section-content strong {
+			color: var(--dark-color, #6d597a);
+		}
+	</style>
+</head>
+
+<body>
+	<div class="cv-container">
+		<div class="header" id="header" data-color="{{color}}">
+			<img src="{{imageUrl}}" alt="Profile Picture">
+			<div class="header-content">
+				<h1>{{name}}</h1>
+				<p>{{summary}}</p>
+				<div class="color:black;">{{{contact}}}</div>
+			</div>
+		</div>
+
+		<div class="content">
+			<section>
+				<h2>Education</h2>
+				<div class="section-content">{{{education}}}</div>
+			</section>
+
+			<section>
+				{{{experience}}}
+			</section>
+
+			<section>
+				<h2>Skills</h2>
+				<div class="skills">{{{skills}}}</div>
+			</section>
+
+			<section>
+				{{{projects}}}
+			</section>
+
+			<section>
+				{{{certificates}}}
+			</section>
+
+			<section>
+				<h2>Languages</h2>
+				<div class="section-content">{{{languages}}}</div>
+			</section>
+
+			<section>
+				{{{interests}}}
+			</section>
+		</div>
+	</div>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			const header = document.getElementById("header");
+			const color = header.getAttribute("data-color") || "#f7f7f7";
+
+			const darkenColor = (color, amount) => {
+				let col = color.substring(1);
+				const num = parseInt(col, 16);
+				let r = (num >> 16) - amount;
+				let g = ((num >> 8) & 0x00FF) - amount;
+				let b = (num & 0x0000FF) - amount;
+
+				r = (r < 0) ? 0 : r;
+				g = (g < 0) ? 0 : g;
+				b = (b < 0) ? 0 : b;
+
+				return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
+			};
+
+			// Apply color or default
+			const darkColor = darkenColor(color, 30);
+
+			document.documentElement.style.setProperty('--main-color', color);
+			document.documentElement.style.setProperty('--dark-color', darkColor);
+
+			// Set background color explicitly if color is default
+			if (!header.getAttribute("data-color")) {
+				header.style.backgroundColor = color;
+			}
+		});
+	</script>
+
+
+</body>
+
+</html>

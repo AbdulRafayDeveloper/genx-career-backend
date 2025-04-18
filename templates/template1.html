@@ -1,27 +1,258 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CV Template 1</title>
-  <style>
-    body { font-family: Arial, sans-serif; color: #333; }
-    .header { background-color: #4CAF50; color: white; padding: 10px; }
-    .section { margin: 20px 0; }
-  </style>
+	<title>{{name}} - CV</title>
+	<style>
+		@page {
+			size: A4;
+			margin: 0;
+		}
+
+		.education-item h3,
+		.education-item p {
+			margin: 2px 0;
+		}
+
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+
+			color: #333;
+		}
+
+		.cv-container {
+			background: #fff;
+			width: 100%;
+			min-height: 297mm;
+			padding: 0;
+			box-sizing: border-box;
+			page-break-after: always;
+			overflow: hidden;
+			/* Ensures no accidental overflow */
+		}
+
+		.header {
+
+			color: white;
+			display: flex;
+			align-items: center;
+			padding: 20px;
+			box-sizing: border-box;
+			width: 100%;
+			/* Full width for header */
+		}
+
+		.header img {
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			object-fit: cover;
+			margin-right: 15px;
+		}
+
+		.header h1 {
+			margin: 0;
+			font-size: 32px;
+		}
+
+		.header p {
+			font-size: 16px;
+			margin: 5px 0;
+		}
+
+		.contact {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-top: 12px;
+			font-size: 14px;
+		}
+
+		.contact div {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+
+		.contact a {
+			color: white;
+			text-decoration: underline;
+		}
+
+		.content {
+			display: flex;
+			width: 100%;
+			/* Ensures columns fit full width */
+			flex-wrap: nowrap;
+			/* Ensure they stay side-by-side */
+			margin-top: 16px;
+		}
+
+		.left-column,
+		.right-column {
+			width: 50%;
+			padding: 15px;
+			box-sizing: border-box;
+		}
+
+		h2 {
+			font-size: 20px;
+			color: #303b4d;
+			border-bottom: 2px solid #303b4d;
+			margin-bottom: 10px;
+		}
+
+		.section-content {
+			font-size: 16px;
+			margin-bottom: 12px;
+		}
+
+		.experience-item,
+		.project-item {
+			margin-bottom: 10px;
+		}
+
+		.experience-item h3,
+		.project-item h3 {
+			font-size: 18px;
+			color: #303b4d;
+			margin: 0;
+		}
+
+		.experience-item p,
+		.project-item p {
+			margin: 3px 0;
+			font-size: 14px;
+			color: #555;
+		}
+
+		.skills span,
+		.interests span {
+			display: inline-block;
+			background: #e1e5e8;
+			color: #303b4d;
+			padding: 6px 12px;
+			margin: 3px;
+			border-radius: 15px;
+			font-size: 16px;
+		}
+
+		section {
+			margin-bottom: 20px;
+		}
+
+		a {
+			color: #212933;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		@media print {
+			.cv-container {
+				width: 100%;
+				height: 100%;
+			}
+		}
+
+		@media (max-width: 600px) {
+			.content {
+				flex-direction: column;
+			}
+
+			.left-column,
+			.right-column {
+				width: 100%;
+			}
+
+			.header {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+
+			.header img {
+				margin-bottom: 10px;
+			}
+		}
+	</style>
 </head>
+
 <body>
-  <div class="header">
-    <h1>{{name}}</h1>
-    <p>{{email}}</p>
-  </div>
-  <div class="section">
-    <h2>Education</h2>
-    <p>{{education}}</p>
-  </div>
-  <div class="section">
-    <h2>Experience</h2>
-    <p>{{experience}}</p>
-  </div>
+
+	<div class="cv-container">
+		<div class="header" id="header">
+
+			<img src="{{imageUrl}}" alt="Profile Picture">
+			<div>
+				<h1>{{name}}</h1>
+				<p>{{summary}}</p>
+				{{{contact}}}
+			</div>
+		</div>
+
+		<div class="content">
+			<div class="left-column">
+				<section>
+					<h2>Education</h2>
+					<div class="section-content">
+						{{{education}}}
+					</div>
+				</section>
+
+				<section>
+
+					{{{experience}}}
+
+				</section>
+			</div>
+
+			<div class="right-column">
+
+				<section>
+					<h2>Skills</h2>
+					<div class="skills">
+						{{{skills}}}
+					</div>
+				</section>
+
+				<section>
+					{{{projects}}}
+				</section>
+
+				<section>
+					{{{certificates}}}
+				</section>
+
+				<section>
+					<h2>Languages</h2>
+					<div class="section-content">
+						{{{languages}}}
+					</div>
+				</section>
+
+				<section>
+
+					{{{interests}}}
+
+				</section>
+			</div>
+		</div>
+	</div>
+
+	<script>
+
+		document.addEventListener("DOMContentLoaded", function () {
+			const header = document.getElementById("header");
+			const color = "{{color}}" || "#1a1c36";
+			if (color && header) {
+				header.style.backgroundColor = color;
+			}
+		});
+	</script>
 </body>
+
 </html>

@@ -44,7 +44,7 @@ const analyzeCVAndJobDescription = async (cvContent, jobDescription) => {
 
         return analysis;
     } catch (error) {
-        console.error("Error in analyzeCVAndJobDescription:", error);
+        console.log("Error in analyzeCVAndJobDescription:", error);
         return { status: 500, message: "Internal server error. Please try again later" };
     }
 };

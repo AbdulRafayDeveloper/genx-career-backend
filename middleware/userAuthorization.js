@@ -53,8 +53,8 @@ const userAuthenticateLoginToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = { _id: decoded.id, role: decoded.role };
 
-    if (req.user.role == "admin") {
-      return unauthorizedResponse(res, "Access denied. User role required.", null);
+    if (req.user.role == "admin" || req.user.role == "user") {
+      return unauthorizedResponse(res, "Access denied. Admin or user role required.", null);
     }
 
     next();

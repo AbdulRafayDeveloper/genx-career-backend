@@ -46,7 +46,7 @@ const getOneContact = async (req, res) => {
 
     return successResponse(res, "Record fetched successfully", contact);
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later.");
   }
 };
@@ -82,7 +82,7 @@ const getAllContacts = async (req, res) => {
       records: contacts, pagination: { totalRecords, totalPages, currentPage: page, pageSize, },
     });
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal Server Error. Please try again later!");
   }
 };
@@ -113,7 +113,7 @@ const deleteOneContact = async (req, res) => {
 
     return successResponse(res, "Contact deleted successfully", contactDelete);
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal Server Error. Please try again later");
   }
 };
@@ -142,7 +142,7 @@ const exportContactsToExcel = async (req, res) => {
 
     res.send(buffer);
   } catch (error) {
-    console.error("Error exporting contacts to Excel:", error.message);
+    console.log("Error exporting contacts to Excel:", error.message);
     return serverErrorResponse(res, "Failed to export contacts to Excel. Please try again later.");
   }
 };

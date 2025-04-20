@@ -10,13 +10,13 @@ const connectDb = async () => {
       console.log("Database is Connected Successfully");
       return;
     } catch (error) {
-      console.error(`Attempt ${attempt} failed:`, error.message);
+      console.log(`Attempt ${attempt} failed:`, error.message);
 
       if (attempt < maxRetries) {
         console.log(`Retrying in ${retryDelay / 1000} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
       } else {
-        console.error("Failed to connect to the database after multiple attempts.");
+        console.log("Failed to connect to the database after multiple attempts.");
         process.exit(1);
       }
     }

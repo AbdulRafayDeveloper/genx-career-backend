@@ -92,7 +92,7 @@ const scrapJobs = async (req, res) => {
     }
 
     // Bulk insert jobs to DB in one operation to reduce the number of database hits
-    const savedJobs = await jobsModel.insertMany(jobsToSave, { ordered: false }).catch(e => console.error(e));
+    const savedJobs = await jobsModel.insertMany(jobsToSave, { ordered: false }).catch(e => console.log(e));
     savedJobsCount = savedJobs.length;
 
     // Return response summary with total count, saved jobs, and skipped jobs
@@ -103,7 +103,7 @@ const scrapJobs = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later");
   }
 };
@@ -128,7 +128,7 @@ const getOneJob = async (req, res) => {
 
     return successResponse(res, "Record fetched successfully", job);
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later.");
   }
 };
@@ -203,7 +203,7 @@ const getAllJobs = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, 'Internal server error. Please try again later');
   }
 };
@@ -262,7 +262,7 @@ const deleteJob = async (req, res) => {
 
     return successResponse(res, "Job deleted successfully", jobDelete);
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal Server Error. Please try again later");
   }
 };
@@ -309,7 +309,7 @@ const exportJobsToExcel = async (req, res) => {
 
     res.send(buffer);
   } catch (error) {
-    console.error("Error exporting jobs to Excel:", error.message);
+    console.log("Error exporting jobs to Excel:", error.message);
     return serverErrorResponse(res, "Failed to export jobs to Excel. Please try again later.");
   }
 };

@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
     }
 
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later");
   }
 };
@@ -65,7 +65,7 @@ const loginUser = async (req, res) => {
       return notFoundResponse(res, "User credentials are not correct", null);
     }
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal Server Error.Please try again later");
   }
 };

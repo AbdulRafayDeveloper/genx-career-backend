@@ -33,7 +33,7 @@ const dashboardStats = async (req, res) => {
 
     return successResponse(res, "Dashboard stats fetched successfully", stats);
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later.");
   }
 };
@@ -61,7 +61,7 @@ const getUsersMonthly = async (req, res) => {
 
     return successResponse(res, `Total users created in ${month}/${year} fetched successfully.`, { usersCreated });
   } catch (error) {
-    console.error("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later.");
   }
 };

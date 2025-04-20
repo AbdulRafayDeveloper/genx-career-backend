@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async (to, subject, text) => {
   if (!to) {
-    console.error("No recipients defined");
+    console.log("No recipients defined");
     return;
   }
   const mailOptions = {
@@ -26,7 +26,7 @@ const sendEmail = async (to, subject, text) => {
     await new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {
-          console.error("Error sending email:", err);
+          console.log("Error sending email:", err);
           reject(err);
         } else {
           console.log("Email sent:", info.response);
@@ -36,7 +36,7 @@ const sendEmail = async (to, subject, text) => {
     });
     console.log("Email sent successfully");
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.log("Error sending email:", error);
     throw new Error("Error sending email");
   }
 };

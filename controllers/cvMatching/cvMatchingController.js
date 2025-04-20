@@ -121,7 +121,7 @@ const userCvMatching = async (req, res) => {
 
         return successResponse(res, responseData, "CV matching process completed and results saved successfully.");
     } catch (error) {
-        console.error("Error Message in Catch BLock:", error.message);
+        console.log("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, "Internal server error. Please try again later.");
     }
 };
@@ -146,7 +146,7 @@ const getOneCvMatcher = async (req, res) => {
 
         return successResponse(res, "CV Matcher Record fetched successfully", cvMatcherRecord);
     } catch (error) {
-        console.error("Error Message in Catch BLock:", error.message);
+        console.log("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, "Internal server error. Please try again later.");
     }
 };
@@ -165,7 +165,7 @@ const getAllCvMatchers = async (req, res) => {
 
         return successResponse(res, 'CV matchers fetched successfully.', { matchers: getAllMatchers, totalMatchersCount, pageNumber: parseInt(pageNumber), pageSize: limit, });
     } catch (error) {
-        console.error("Error Message in Catch BLock:", error.message);
+        console.log("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, 'Internal server error. Please try again later.');
     }
 };
@@ -196,7 +196,7 @@ const deleteCvMatcher = async (req, res) => {
 
         return successResponse(res, "Record deleted successfully", cvMatcherDelete);
     } catch (error) {
-        console.error("Error Message in Catch BLock:", error.message);
+        console.log("Error Message in Catch BLock:", error.message);
         return serverErrorResponse(res, "Internal Server Error. Please try again later");
     }
 };
@@ -228,7 +228,7 @@ const exportCvMatchersToExcel = async (req, res) => {
 
         res.send(buffer);
     } catch (error) {
-        console.error("Error exporting users to Excel:", error.message);
+        console.log("Error exporting users to Excel:", error.message);
         return serverErrorResponse(res, "Failed to export users to Excel. Please try again later.");
     }
 };

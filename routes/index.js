@@ -5,7 +5,9 @@ import contactUsRoutes from "./users/contactRoutes.js";
 import jobsRoutes from "./jobs/jobsRoutes.js";
 import cvMatchingRoutes from "./cvMatching/cvMatchingRoutes.js";
 import adminDashboardRoutes from "./dashboard/adminDashboardRoutes.js";
-import cvCreation from "./cvCreation/cvRoutes.js";
+import cvCreationRoutes from "./cvCreation/cvCreationRoutes.js";
+import cvTemplatesRoutes from "./cvTemplates/cvTemplatesRoutes.js";
+import websiteSeoRoutes from "./websitSeo/websiteSeoRoutes.js";
 
 const router = express.Router();
 
@@ -21,6 +23,8 @@ router.use("/api", contactUsRoutes);
 router.use("/api", jobsRoutes);
 router.use("/api", cvMatchingRoutes);
 router.use("/api", adminDashboardRoutes);
-router.use("/api", cvCreation);
+router.use("/api", cvCreationRoutes);
+router.use("/api", cvTemplatesRoutes);
+router.use("/api", websiteSeoRoutes);
 
 export default router;

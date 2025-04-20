@@ -40,7 +40,7 @@ const getDateFilter = (datePosted) => {
         }
         return filterDate;
     } catch (error) {
-        console.error("Error in getDateFilter:", error.message);
+        console.log("Error in getDateFilter:", error.message);
         return null;
     }
 };

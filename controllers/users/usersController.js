@@ -3,7 +3,9 @@ import cvMatchersModel from "../../models/cvMatchersModel.js";
 import usersModel from "../../models/usersModel.js";
 import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 import XLSX from "xlsx";
+import Users from "../../models/usersModel.js";
 
 const getAllUsersController = async (req, res) => {
   try {
@@ -44,6 +46,7 @@ const getAllUsersController = async (req, res) => {
 
 const getOneUserController = async (req, res) => {
   try {
+    console.log("getOneUserController");
     const id = req.params.id;
 
     if (!id) {
@@ -134,4 +137,85 @@ const exportUsersToExcel = async (req, res) => {
   }
 };
 
-export { getAllUsersController, getOneUserController, deleteUserController, exportUsersToExcel };
+const userProfileUpdate = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { name } = req.body;
+
+    if (!name) {
+      return badRequestResponse(res, "Name is required field", null);
+    }
+
+    if (!id) {
+      return unauthorizedResponse(res, "Id not provided", null);
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
+    }
+
+    const user = await getUserById(id);
+
+    if (!user) {
+      return notFoundResponse(res, "The user is not found!", null);
+    }
+
+    user.name = name;
+    const updatedUser = await user.save();
+
+    if (!updatedUser) {
+      return serverErrorResponse(res, "Unable to update user profile. Please try again later");
+    }
+
+    return successResponse(res, "User profile updated successfully", updatedUser);
+  } catch (error) {
+    console.error("Error in Catch Block:", error.message);
+    return serverErrorResponse(res, "Internal Server Error. Please try again later");
+  }
+};
+
+const userPasswordUpdate = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { password, newPassword } = req.body;
+
+    if (!password || !newPassword) {
+      return badRequestResponse(res, "Current password and new password are required", null);
+    }
+
+    if (!id) {
+      return unauthorizedResponse(res, "User ID not provided", null);
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return badRequestResponse(res, "Invalid ID format", null);
+    }
+
+    const user = await Users.findById(id);
+
+    if (!user) {
+      return notFoundResponse(res, "User not found", null);
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordMatch) {
+      return unauthorizedResponse(res, "Current password is incorrect", null);
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    const updatedUser = await Users.findByIdAndUpdate(id, { password: hashedNewPassword });
+
+    if (!updatedUser) {
+      return serverErrorResponse(res, "Failed to update password", null);
+    }
+
+    return successResponse(res, "Password updated successfully", updatedUser);
+  } catch (error) {
+    console.error("Error in userPasswordUpdate:", error.message);
+    return serverErrorResponse(res, "Internal Server Error. Please try again later");
+  }
+};
+
+export { getAllUsersController, getOneUserController, deleteUserController, exportUsersToExcel, userProfileUpdate, userPasswordUpdate };

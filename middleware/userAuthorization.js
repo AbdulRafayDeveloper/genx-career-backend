@@ -69,4 +69,68 @@ const userAuthenticateLoginToken = async (req, res, next) => {
   }
 };
 
-export { authenticateLoginToken, userAuthenticateLoginToken };
+const authenticateOtpToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return badRequestResponse(res, "Authentication token is required", null);
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return notFoundResponse(res, "Authentication token is not provided", null);
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.FORGET_PASSWORD_TOKEN);
+    console.log("decoded:", decoded);
+    const { email, otp } = decoded;
+    console.log("email:", email);
+    console.log("otp:", otp);
+    if (!email || !otp) {
+      return badRequestResponse(res, "Invalid token data", null);
+    }
+    req.otpData = decoded;
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return unauthorizedResponse(res, "Expired token, log in again");
+    } else if (error.name === "JsonWebTokenError") {
+      return unauthorizedResponse(res, "Invalid token, log in again");
+    } else {
+      return serverErrorResponse(res, "An unexpected error occurred");
+    }
+  }
+};
+
+
+const authenticateEmailToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return badRequestResponse(res, "Authentication token is required", null);
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return notFoundResponse(res, "Authentication token is not provided", null);
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.RESET_PASSWORD_TOKEN);
+    req.email = decoded.email;
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return unauthorizedResponse(res, "Expired token, log in again", null);
+    } else if (error.name === "JsonWebTokenError") {
+      return unauthorizedResponse(res, "Invalid token. Please try again", null);
+    } else {
+      return serverErrorResponse(res, "An unexpected error occurred", error.message);
+    }
+  }
+};
+
+export { authenticateLoginToken, userAuthenticateLoginToken, authenticateOtpToken, authenticateEmailToken };

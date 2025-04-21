@@ -38,10 +38,22 @@ const countUsers = async (query) => {
 const listUsers = async (query, skip, limit) => {
   return await usersModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 };
+
+const updateUser = async (user_id, data) => {
+  const updatedUser = await usersModel.findByIdAndUpdate(
+    user_id,
+    { $set: data },
+    { new: true }
+  );
+  return updatedUser;
+};
+
+
 export {
   findUser,
   findOneUser,
   createUser,
+  updateUser,
   getAllUsers,
   getUserById,
   deleteUser,

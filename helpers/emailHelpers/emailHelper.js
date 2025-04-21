@@ -15,12 +15,21 @@ const sendEmail = async (to, subject, text) => {
     console.log("No recipients defined");
     return;
   }
+
+  console.log("Sending email to:", to);
+  console.log("Email subject:", subject);
+  console.log("Email text:", text);
+  console.log("Emprocess.env.ADMIN_EMAIL:", process.env.ADMIN_EMAIL);
+  console.log("Emprocess.env.ADMIN_PASSWORD:", process.env.ADMIN_PASSWORD);
+
   const mailOptions = {
     from: process.env.ADMIN_EMAIL,
     to,
     subject,
     html: text,
   };
+
+  console.log("Mail options:", mailOptions);
 
   try {
     await new Promise((resolve, reject) => {

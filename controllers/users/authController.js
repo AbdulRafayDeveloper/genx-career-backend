@@ -305,7 +305,7 @@ const verifyUserEmail = async (req, res) => {
       return notFoundResponse(res, "User not found", null);
     }
 
-    if (user.emailVerified) {
+    if (user.isEmailVerified) {
       return successResponse(res, "Email already verified", null);
     }
 

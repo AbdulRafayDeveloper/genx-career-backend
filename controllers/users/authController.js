@@ -3,7 +3,9 @@ import { findUser, findOneUser, createUser, updateUser } from "../../services/us
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import generateForgetPasswordTemplate from "../../helpers/emailHelpers/forgetPasswordTemplate.js";
+import generateEmailVerificationTemplate from "../../helpers/emailHelpers/generateEmailVerificationTemplate.js";
 import sendEmail from "../../helpers/emailHelpers/emailHelper.js";
+import UserModel from "../../models/usersModel.js";
 
 const registerUser = async (req, res) => {
   try {
@@ -28,7 +30,22 @@ const registerUser = async (req, res) => {
     });
 
     if (newUser) {
-      return successResponse(res, "User account created successfully", newUser);
+      const token = jwt.sign(
+        { userId: newUser._id },
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: "1h" }
+      );
+
+      if (!token) {
+        return serverErrorResponse(res, "Failed to create user");
+      }
+
+      const subject = "Verify Your Email";
+      const html = generateEmailVerificationTemplate(newUser.name, `${process.env.CLIENT_URL}/auth/verify-email?token=${token}`);
+
+      await sendEmail(email, subject, html);
+
+      return successResponse(res, "User account created successfully. Please verify your email", token);
     } else {
       return serverErrorResponse(res, "Failed to create user");
     }
@@ -54,6 +71,14 @@ const loginUser = async (req, res) => {
     }
 
     const passwordCheck = await bcrypt.compare(password, user.password);
+
+    if (user.isEmailVerified === false) {
+      return notFoundResponse(
+        res,
+        "Your email address has not been verified. Please check your inbox and verify your email to continue.",
+        null
+      );
+    }
 
     if (user && passwordCheck) {
       const userLoginToken = jwt.sign(
@@ -258,4 +283,44 @@ const resetPassword = async (req, res) => {
   }
 };
 
-export { registerUser, loginUser, changePassword, forgetPassword, verifyOtp, resetPassword };
+const verifyUserEmail = async (req, res) => {
+  console.log("req.headers.authorization:", req.headers.authorization);
+  const authHeader = req.headers.authorization;
+
+  console.log("authHeader:", authHeader);
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return notFoundResponse(res, "Authentication token is required", null);
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const userId = decoded.userId;
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      return notFoundResponse(res, "User not found", null);
+    }
+
+    if (user.emailVerified) {
+      return successResponse(res, "Email already verified", null);
+    }
+
+    user.isEmailVerified = true;
+    const updatedUser = await user.save();
+
+    if (!updatedUser) {
+      return serverErrorResponse(res, "Unable to update user profile. Please try again later");
+    }
+
+    return successResponse(res, "Email verified successfully", null);
+  } catch (err) {
+    console.error("JWT Error:", err);
+    return serverErrorResponse(res, "Internal server error. Please try again later!");
+  }
+}
+
+export { registerUser, loginUser, changePassword, forgetPassword, verifyOtp, resetPassword, verifyUserEmail };

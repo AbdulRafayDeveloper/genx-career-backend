@@ -1,4 +1,4 @@
-import { badRequestResponse, notFoundResponse, serverErrorResponse, unauthorizedResponse } from "../helpers/apiResponsesHelpers.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse, unauthorizedResponse } from "../helpers/apiResponsesHelpers.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();

@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import "./config/firebaseConfig.js";
 import connectDb from "./config/dbConnection.js";
 import routes from "./routes/index.js";
 import cors from "cors";

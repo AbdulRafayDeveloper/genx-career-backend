@@ -6,12 +6,9 @@ import { userProfilePicUpdateMiddleware } from "../../middleware/userProfilePicU
 const router = express.Router();
 
 router.get("/users", authenticateLoginToken, getAllUsersController);
-// router.get("/user/:id", authenticateLoginToken, getOneUserController);
 router.get("/user/:id", getOneUserController);
 router.get("/usersList/export", authenticateLoginToken, exportUsersToExcel);
-// router.put("/userProfileUpdate/:id", userProfilePicUpdateMiddleware, authenticateLoginToken, userProfileUpdate);
 router.put("/userProfileUpdate/:id", userProfilePicUpdateMiddleware, userProfileUpdate);
-// router.put("/userPasswordUpdate/:id", authenticateLoginToken, userPasswordUpdate);
 router.put("/userPasswordUpdate/:id", userPasswordUpdate);
 router.delete("/user/:id", authenticateLoginToken, deleteUserController);
 

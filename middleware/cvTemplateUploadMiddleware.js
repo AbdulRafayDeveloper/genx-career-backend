@@ -1,147 +1,66 @@
-// import multer from "multer";
-// import fs from "fs";
-// import path from "path";
-// import {
-//     badRequestResponse,
-// } from "../helpers/apiResponsesHelpers.js";
-
-// // Create directory if not exists
-// const cvTemplatesDir = "public/cvTemplates";
-// if (!fs.existsSync(cvTemplatesDir)) {
-//     fs.mkdirSync(cvTemplatesDir, { recursive: true });
-// }
-
-// // Multer config
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         cb(null, cvTemplatesDir);
-//     },
-//     filename: function (req, file, cb) {
-//         if (!req.body.name) {
-//             return cb(new Error("Template name (req.body.name) is required"), null);
-//         }
-//         const ext = path.extname(file.originalname);
-//         const filename = `${req.body.name}${ext}`;
-//         cb(null, filename);
-//     },
-// });
-
-// const fileFilter = function (req, file, cb) {
-//     const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
-//     if (allowedTypes.includes(file.mimetype)) {
-//         cb(null, true);
-//     } else {
-//         cb(new Error("Only JPG, PNG, JPEG, and WEBP files are allowed"), false);
-//     }
-// };
-
-// const upload = multer({ storage, fileFilter }).single("template");
-
-// // Middleware function
-// const cvTemplateUploadMiddleware = (req, res, next) => {
-//     let attempts = 0;
-//     const maxAttempts = 3;
-
-//     const tryUpload = () => {
-//         upload(req, res, function (err) {
-//             attempts++;
-
-//             if (err) {
-//                 if (attempts < maxAttempts) {
-//                     return tryUpload(); // Retry
-//                 } else {
-//                     return badRequestResponse(res, "File upload failed after 3 attempts", err.message);
-//                 }
-//             }
-
-//             if (!req.file) {
-//                 return badRequestResponse(res, "No template file uploaded", null);
-//             }
-
-//             if (!req.body.name) {
-//                 return badRequestResponse(res, "Template name (req.body.name) is required", null);
-//             }
-
-//             return next(); // Success
-//         });
-//     };
-
-//     tryUpload();
-// };
-
-// export { cvTemplateUploadMiddleware };
-
 import multer from "multer";
-import fs from "fs";
 import path from "path";
-import {
-    badRequestResponse,
-} from "../helpers/apiResponsesHelpers.js";
+import { badRequestResponse, serverErrorResponse } from "../helpers/apiResponsesHelpers.js";
+import { firebaseStorage } from "../config/firebaseConfig.js";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import CvTemplate from "../models/cvTemplates.js";
 
-// ✅ New directory
-const cvTemplatesDir = "temp/cvTemplates";
+const storage = multer.memoryStorage();
+const fileFilter = (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
 
-// Create directory if not exists
-if (!fs.existsSync(cvTemplatesDir)) {
-    fs.mkdirSync(cvTemplatesDir, { recursive: true });
-}
-
-// Multer config
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, cvTemplatesDir);
-    },
-    filename: function (req, file, cb) {
-        if (!req.body.name) {
-            return cb(new Error("Template name (req.body.name) is required"), null);
-        }
-        const ext = path.extname(file.originalname);
-        const filename = `${req.body.name}${ext}`;
-        cb(null, filename);
-    },
-});
-
-const fileFilter = function (req, file, cb) {
-    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error("Only JPG, PNG, JPEG, and WEBP files are allowed"), false);
-    }
+    allowed.includes(file.mimetype)
+        ? cb(null, true)
+        : cb(new Error("Only JPG/PNG/JPEG/WEBP allowed"), false);
 };
 
 const upload = multer({ storage, fileFilter }).single("template");
 
-// Middleware function
-const cvTemplateUploadMiddleware = (req, res, next) => {
-    let attempts = 0;
-    const maxAttempts = 3;
+export const cvTemplateUploadMiddleware = (req, res, next) => {
+    upload(req, res, async err => {
+        if (err) return badRequestResponse(res, "Upload error", err.message);
 
-    const tryUpload = () => {
-        upload(req, res, function (err) {
-            attempts++;
+        if (!req.file) return badRequestResponse(res, "No template file uploaded", null);
 
-            if (err) {
-                if (attempts < maxAttempts) {
-                    return tryUpload(); // Retry
-                } else {
-                    return badRequestResponse(res, "File upload failed after 3 attempts", err.message);
-                }
-            }
+        if (!req.body.name) return badRequestResponse(res, "Template name is required", null);
 
-            if (!req.file) {
-                return badRequestResponse(res, "No template file uploaded", null);
-            }
+        const existingTemplate = await CvTemplate.findOne({ name: req.body.name });
 
-            if (!req.body.name) {
-                return badRequestResponse(res, "Template name (req.body.name) is required", null);
-            }
+        console.log("existingTemplate: ", existingTemplate);
 
-            return next(); // Success
-        });
-    };
+        if (existingTemplate) {
+            console.log("existingTemplate: ", existingTemplate);
+            return badRequestResponse(res, "Template with same name already exists");
+        }
 
-    tryUpload();
+        try {
+            const ext = path.extname(req.file.originalname);
+            const fileName = `${req.body.name}${ext}`;
+            const firebasePath = `cvTemplates/${fileName}`;
+
+            console.log("→ Uploading to Firebase:", firebasePath);
+
+            // upload to Firebase
+            const fileRef = ref(firebaseStorage, firebasePath);
+            console.log("req.file.buffer: ", req.file.buffer);
+            await uploadBytes(fileRef, req.file.buffer, { contentType: req.file.mimetype });
+
+            // get its public URL
+            console.log("fileRef: ", fileRef);
+            const downloadURL = await getDownloadURL(fileRef);
+
+            console.log("downloadURL: ", downloadURL);
+
+            // attach for your controller
+            req.firebaseFilePath = firebasePath;
+            req.firebaseDownloadURL = downloadURL;
+
+            console.log("→ Uploaded to Firebase:", firebasePath);
+            console.log("→ Download URL:", downloadURL);
+
+            return next();
+        } catch (uploadErr) {
+            return serverErrorResponse(res, "Firebase upload failed", uploadErr.message);
+        }
+    });
 };
-
-export { cvTemplateUploadMiddleware };

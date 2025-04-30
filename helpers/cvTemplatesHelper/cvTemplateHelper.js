@@ -2,19 +2,24 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { badRequestResponse, serverErrorResponse } from "../apiResponsesHelpers.js";
+import { ref, deleteObject } from "firebase/storage";
+import { firebaseStorage } from "../../config/firebaseConfig.js";
 
-export const retryDeleteFile = (filePath, attempts = 3) => {
+export const retryDeleteFile = async (firebasePath, attempts = 3) => {
     let tries = 0;
+
     while (tries < attempts) {
         try {
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+            const fileRef = ref(firebaseStorage, firebasePath);
+            await deleteObject(fileRef);
+            console.log("Deleted from Firebase:", firebasePath);
             return true;
         } catch (err) {
             tries++;
+            console.warn(`Attempt ${tries} failed to delete ${firebasePath}:`, err.message);
+
             if (tries >= attempts) {
-                console.log(`Failed to delete file after ${attempts} attempts:`, err.message);
+                console.error(`Failed to delete Firebase file after ${attempts} attempts:`, err.message);
                 return false;
             }
         }
@@ -39,23 +44,12 @@ export const retryCopyFile = (source, destination, attempts = 3) => {
     }
 };
 
-export const renameFileWithUuid = (sourceFilePath, destinationDir) => {
-    try {
-        const ext = path.extname(sourceFilePath);  // Get the file extension
-        const uniqueFileName = uuidv4() + ext;    // Generate a unique file name
-        const destinationPath = path.join(destinationDir, uniqueFileName);
-
-        // Rename the file by moving it to the destination folder with a new name
-        const renameSuccess = retryRenameFile(sourceFilePath, destinationPath);
-        if (!renameSuccess) {
-            throw new Error("Failed to rename file");
-        }
-
-        return { success: true, newFileName: uniqueFileName, newFilePath: destinationPath };
-    } catch (error) {
-        console.log("Error in renameFileWithUuid:", error.message);
-        return { success: false, error: error.message };
-    }
+export const renameFileWithUuid = (name, originalName) => {
+    const ext = path.extname(originalName);
+    const safeName = name.replace(/[^a-z0-9_\-]/gi, "_").toLowerCase(); // sanitize
+    const newFileName = `${safeName}${ext}`;
+    const firebasePath = `cvTemplates/${newFileName}`;
+    return { newFileName, firebasePath };
 };
 
 export const retryRenameFile = (source, destination, attempts = 3) => {

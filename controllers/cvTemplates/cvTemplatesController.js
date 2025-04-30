@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import mongoose from "mongoose";
 import CvTemplate from "../../models/cvTemplates.js";
 import {
@@ -9,59 +7,63 @@ import {
   serverErrorResponse,
 } from "../../helpers/apiResponsesHelpers.js";
 import { renameFileWithUuid, retryDeleteFile } from "../../helpers/cvTemplatesHelper/cvTemplateHelper.js";
+import { firebaseStorage } from "../../config/firebaseConfig.js";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 
 const addCvTemplate = async (req, res) => {
   try {
+    console.log("req.body 1: ", req.body);
     const { name } = req.body;
     const image = req.file;
 
+    console.log("image: ", image);
     if (!name || !image) {
-      retryDeleteFile(image.path);
       return badRequestResponse(res, "Name and image are required");
     }
 
     const existingTemplate = await CvTemplate.findOne({ name });
+
+    console.log("existingTemplate: ", existingTemplate);
     if (existingTemplate) {
-      retryDeleteFile(image.path);
+      // Delete uploaded file from Firebase since we won't use it
+      if (req.firebaseFilePath) await retryDeleteFile(req.firebaseFilePath);
+      console.log("req.firebaseFilePath: ", req.firebaseFilePath);
       return badRequestResponse(res, "Template with same name already exists");
     }
 
-    const tempFilePath = image.path;
-    const publicDir = "public/cvTemplates";
+    const ext = image.originalname.split(".").pop();
+    const firebasePath = req.firebaseFilePath || `cvTemplates/${name}.${ext}`;
 
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
-    }
+    console.log("firebasePath: ", firebasePath);
+    const fileRef = ref(firebaseStorage, firebasePath);
+    const imageUrl = await getDownloadURL(fileRef);
 
-    // Use the helper to rename and move the file
-    const { success, newFileName, newFilePath, error } = renameFileWithUuid(tempFilePath, publicDir);
+    console.log("imageUrl: ", imageUrl);
 
-    if (!success) {
-      retryDeleteFile(tempFilePath);
-      return serverErrorResponse(res, `Failed to rename and move file: ${error}`);
-    }
-
-    // Construct the image URL
-    const imageUrl = `/cvTemplates/${newFileName}`;
-
-    // Save the template in the database
+    // Save to database
     const newTemplate = new CvTemplate({ name, imageUrl });
     const savedTemplate = await newTemplate.save();
 
-    retryDeleteFile(tempFilePath); // Always clean up temp file after DB action
+    console.log("savedTemplate: ", savedTemplate);
 
     if (!savedTemplate) {
+      if (req.firebaseFilePath) await retryDeleteFile(req.firebaseFilePath);
       return serverErrorResponse(res, "Failed to save template in the database");
     }
 
+    // Delete uploaded file from Firebase since we won't use it
+    console.log("req.firebaseFilePath: ", req.firebaseFilePath);
     return successResponse(res, "Template added successfully", savedTemplate);
   } catch (error) {
-    console.log("Error in addCvTemplate:", error.message);
-    retryDeleteFile(req?.file?.path);
+    console.error("Error in addCvTemplate:", error.message);
+
+    if (req?.firebaseFilePath) {
+      await retryDeleteFile(req.firebaseFilePath);
+    }
+
     return serverErrorResponse(res, "Internal Server Error");
   }
 };
-
 
 const getAllCvTemplates = async (req, res) => {
   try {
@@ -118,16 +120,17 @@ const updateCvTemplate = async (req, res) => {
   const { name } = req.body;
   const image = req.file;
 
-  const tempDir = "temp/cvTemplates";
-  const publicDir = "public/cvTemplates";
-
-  let tempFilePath = null;
+  console.log("req.file: ", req.file);
+  console.log("req.body: ", req.body);
+  console.log("req.params: ", req.params);
 
   try {
     // Step 1: Validate name
     if (!name) {
       return badRequestResponse(res, "Name is required", null);
     }
+
+    console.log("name: ", name);
 
     // Step 2: Validate ID
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
@@ -136,45 +139,72 @@ const updateCvTemplate = async (req, res) => {
 
     // Step 3: Find DB record
     const existingRecord = await CvTemplate.findById(id);
+
+    console.log("existingRecord: ", existingRecord);
     if (!existingRecord) {
       return notFoundResponse(res, "Template not found", null);
     }
 
-    // Step 4: Check if temp file exists
-    const originalFileName = image?.originalname;
-    tempFilePath = path.join(tempDir, originalFileName);
+    // Step 4: If no new image, just update name
+    if (!image) {
+      existingRecord.name = name;
 
-    if (!fs.existsSync(tempFilePath)) {
-      return notFoundResponse(res, "File not found in temp folder", null);
+      // Save to database
+      console.log("existingRecord: ", existingRecord);
+      await existingRecord.save();
+      return successResponse(res, "Template name updated", existingRecord);
     }
 
-    // Step 5: Delete existing file in publicDir based on DB record
-    if (existingRecord.imageUrl) {
-      const existingPublicPath = path.join("public", existingRecord.imageUrl);
-      if (fs.existsSync(existingPublicPath)) {
-        retryDeleteFile(existingPublicPath);
-      }
+    console.log("image: ", image);
+
+    // Step 5: Delete existing file from Firebase
+    let oldPath;
+    try {
+      const url = new URL(existingRecord.imageUrl);
+      // path looks like /v0/b/{bucket}/o/{pathEncoded}
+      const parts = url.pathname.split("/o/");
+      console.log("parts: ", parts);
+      oldPath = parts[1].split(/[\?]/)[0];
+      oldPath = decodeURIComponent(oldPath);
+      console.log("oldPath: ", oldPath);
+      await retryDeleteFile(oldPath);
+    } catch (e) {
+      console.warn("Could not delete old Firebase file:", e.message);
     }
 
-    // Step 6: Use the helper to rename and move the file with a unique name
-    const { success, newFileName, newFilePath, error } = renameFileWithUuid(tempFilePath, publicDir);
+    const ext = image.originalname.includes(".")
+      ? "." + image.originalname.split(".").pop()
+      : "";
 
-    if (!success) {
-      return serverErrorResponse(res, `Failed to rename and move file: ${error}`);
-    }
+    console.log("ext: ", ext);
+    const { newFileName, firebasePath } = renameFileWithUuid(name, image.originalname);
 
-    // Step 7: Update DB with new path
-    existingRecord.imageUrl = `/cvTemplates/${newFileName}`;
+
+    console.log("newFileName: ", newFileName);
+    console.log("firebasePath: ", firebasePath);
+
+    // Step 7: Upload new image buffer to Firebase Storage
+    const fileRef = ref(firebaseStorage, firebasePath);
+    await uploadBytes(fileRef, image.buffer, { contentType: image.mimetype });
+
+    // Step 8: Get public download URL
+    const downloadURL = await getDownloadURL(fileRef);
+
+    console.log("downloadURL: ", downloadURL);
+
+    // Step 9: Update DB record
+    existingRecord.name = name;
+    existingRecord.imageUrl = downloadURL;
     await existingRecord.save();
+
+    console.log("existingRecord: ", existingRecord);
 
     return successResponse(res, "Template updated successfully", existingRecord);
   } catch (error) {
-    console.log("Error in updateCvTemplate:", error.message);
-    retryDeleteFile(req?.file?.path);
+    console.error("Error in updateCvTemplate:", error);
     return serverErrorResponse(res, "Internal Server Error", error.message);
   }
 };
-
 
 const deleteCvTemplate = async (req, res) => {
   try {
@@ -190,12 +220,15 @@ const deleteCvTemplate = async (req, res) => {
       return notFoundResponse(res, "Template not found", null);
     }
 
-    const filePath = path.join("public", template.imageUrl);
+    // Firebase path, assuming template.imageUrl is like `/cvTemplates/filename.png`
+    const firebasePath = template.imageUrl.startsWith("/")
+      ? template.imageUrl.substring(1)
+      : template.imageUrl;
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    // Attempt to delete from Firebase Storage
+    await retryDeleteFile(firebasePath); // has retry logic inside
 
+    // Delete from DB
     const deletedRecord = await CvTemplate.findByIdAndDelete(id);
 
     if (!deletedRecord) {

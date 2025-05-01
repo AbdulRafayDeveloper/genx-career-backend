@@ -115,7 +115,7 @@ const getOneCvTemplate = async (req, res) => {
   }
 };
 
-const updateCvTemplate = async (req, res) => {
+const saveUpdatedCvTemplate = async (req, res) => {
   const id = req.params.id;
   const { name } = req.body;
   const image = req.file;
@@ -246,6 +246,6 @@ export {
   addCvTemplate,
   getAllCvTemplates,
   getOneCvTemplate,
-  updateCvTemplate,
+  saveUpdatedCvTemplate,
   deleteCvTemplate,
 };

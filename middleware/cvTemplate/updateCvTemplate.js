@@ -1,5 +1,5 @@
 import multer from "multer";
-import { badRequestResponse } from "../helpers/responsesHelper/apiResponsesHelpers.js";
+import { badRequestResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
@@ -12,7 +12,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter }).single("template");
 
-export const cvTemplateUpdateMiddleware = (req, res, next) => {
+export const updateCvTemplate = (req, res, next) => {
     upload(req, res, (err) => {
         if (err) {
             return badRequestResponse(res, "File upload error", err.message);

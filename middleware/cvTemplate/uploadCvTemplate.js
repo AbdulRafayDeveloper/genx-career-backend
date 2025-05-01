@@ -1,9 +1,9 @@
 import multer from "multer";
 import path from "path";
-import { badRequestResponse, serverErrorResponse } from "../helpers/responsesHelper/apiResponsesHelpers.js";
-import { firebaseStorage } from "../config/firebaseConfig.js";
+import { badRequestResponse, serverErrorResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
+import { firebaseStorage } from "../../config/firebaseConfig.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import CvTemplate from "../models/cvTemplatesModel.js";
+import CvTemplate from "../../models/cvTemplatesModel.js";
 
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
@@ -16,7 +16,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter }).single("template");
 
-export const cvTemplateUploadMiddleware = (req, res, next) => {
+export const uploadCvTemplate = (req, res, next) => {
     upload(req, res, async err => {
         if (err) return badRequestResponse(res, "Upload error", err.message);
 

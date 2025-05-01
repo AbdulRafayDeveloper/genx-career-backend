@@ -1,10 +1,10 @@
 import express from "express";
 import { dashboardStats, getUsersMonthly } from "../../controllers/dashboard/adminDashboardController.js";
-import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
+import { verifyAdminToken } from "../../middleware/auth/authorizeUser.js";
 
 const router = express.Router();
 
-router.get("/dashboard", authenticateLoginToken, dashboardStats);
-router.get("/dashboard/users-monthly", authenticateLoginToken, getUsersMonthly);
+router.get("/dashboard", verifyAdminToken, dashboardStats);
+router.get("/dashboard/users-monthly", verifyAdminToken, getUsersMonthly);
 
 export default router;

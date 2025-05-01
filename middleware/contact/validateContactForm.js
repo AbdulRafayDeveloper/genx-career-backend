@@ -1,7 +1,7 @@
-import { badRequestResponse, serverErrorResponse, } from "../helpers/responsesHelper/apiResponsesHelpers.js";
-import newContactFieldsValidation from "../helpers/validationsHelper/newContactFieldsValidation.js";
+import { badRequestResponse, serverErrorResponse, } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
+import newContactFieldsValidation from "../../helpers/validationsHelper/newContactFieldsValidation.js";
 
-const newContactValidation = async (req, res, next) => {
+const validateContactForm = async (req, res, next) => {
   try {
     const { error } = await newContactFieldsValidation.validate(req.body, {
       abortEarly: false,
@@ -18,4 +18,4 @@ const newContactValidation = async (req, res, next) => {
   }
 };
 
-export default newContactValidation;
+export default validateContactForm;

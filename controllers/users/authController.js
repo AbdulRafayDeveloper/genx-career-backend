@@ -416,4 +416,5 @@ const verifyUserEmail = async (req, res) => {
   }
 }
 
-export { registerUser, loginUser, changePassword, forgetPassword, verifyOtp, resetPassword, resendOtp, verifyUserEmail };
+// export { registerUser, loginUser, changePassword, forgetPassword, verifyOtp, resetPassword, resendOtp, verifyUserEmail };
+export { registerUser, loginUser, forgetPassword, verifyOtp, resetPassword, resendOtp, verifyUserEmail };

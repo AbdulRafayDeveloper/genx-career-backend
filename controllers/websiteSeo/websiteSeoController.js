@@ -37,20 +37,20 @@ const addWebsiteSeo = async (req, res) => {
     }
 };
 
-const getAllWebsiteSeo = async (req, res) => {
-    try {
-        const seoEntries = await WebsiteSeo.find().sort({ createdAt: -1 });
+// const getAllWebsiteSeo = async (req, res) => {
+//     try {
+//         const seoEntries = await WebsiteSeo.find().sort({ createdAt: -1 });
 
-        if (!seoEntries || seoEntries.length === 0) {
-            return successResponse(res, "No website SEO entries found.", seoEntries);
-        }
+//         if (!seoEntries || seoEntries.length === 0) {
+//             return successResponse(res, "No website SEO entries found.", seoEntries);
+//         }
 
-        return successResponse(res, "Website SEO entries retrieved successfully.", seoEntries);
-    } catch (error) {
-        console.log("Error in getAllWebsiteSeo:", error);
-        return serverErrorResponse(res, "An unexpected issue occurred.");
-    }
-};
+//         return successResponse(res, "Website SEO entries retrieved successfully.", seoEntries);
+//     } catch (error) {
+//         console.log("Error in getAllWebsiteSeo:", error);
+//         return serverErrorResponse(res, "An unexpected issue occurred.");
+//     }
+// };
 
 const getWebsiteSeoByPageName = async (req, res) => {
     try {
@@ -169,4 +169,5 @@ const deleteWebsiteSeo = async (req, res) => {
     }
 };
 
-export { addWebsiteSeo, getAllWebsiteSeo, getOneWebsiteSeo, getWebsiteSeoByPageName, updateWebsiteSeo, deleteWebsiteSeo };
+// export { addWebsiteSeo, getAllWebsiteSeo, getOneWebsiteSeo, getWebsiteSeoByPageName, updateWebsiteSeo, deleteWebsiteSeo };
+export { addWebsiteSeo, getWebsiteSeoByPageName, updateWebsiteSeo, deleteWebsiteSeo };

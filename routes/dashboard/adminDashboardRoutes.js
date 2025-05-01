@@ -5,6 +5,6 @@ import { authenticateLoginToken } from "../../middleware/userAuthorization.js";
 const router = express.Router();
 
 router.get("/dashboard", authenticateLoginToken, dashboardStats);
-router.get("/dashboard/usersMonthly", authenticateLoginToken, getUsersMonthly);
+router.get("/dashboard/users-monthly", authenticateLoginToken, getUsersMonthly);
 
 export default router;

@@ -3,6 +3,8 @@ import usersModel from '../../models/usersModel.js';
 import contactsModel from '../../models/contactsModel.js';
 import jobsModel from '../../models/jobListingsModel.js';
 import cvMatchersModel from '../../models/cvMatchersModel.js';
+import cvTemplates from '../../models/cvTemplates.js';
+import cvCreators from '../../models/cvCreatorsModel.js';
 
 const dashboardStats = async (req, res) => {
   try {
@@ -10,25 +12,16 @@ const dashboardStats = async (req, res) => {
     const totalJobs = await jobsModel.countDocuments();
     const totalCvMatchers = await cvMatchersModel.countDocuments();
     const totalContacts = await contactsModel.countDocuments();
-    const totalQueriesData = await contactsModel.aggregate([
-      { $project: { messageCount: { $size: "$messages" } } },
-      { $group: { _id: null, totalQueries: { $sum: "$messageCount" } } },
-    ]);
-
-    const totalQueries = totalQueriesData.length > 0 ? totalQueriesData[0].totalQueries : 0;
-
-    // 6. Fetch total CV Creators records
-
-    // const totalCvCreators = await CvCreatorsCollection.countDocuments();
-    const totalCvCreators = 10;
+    const totalCvTemplates = await cvTemplates.countDocuments();
+    const totalCvCreators = await cvCreators.countDocuments();
 
     const stats = {
-      totalUsers,
       totalJobs,
+      totalUsers,
+      totalQueries: totalContacts,
       totalCvMatchers,
-      totalContacts,
-      totalQueries,
-      totalCvCreators
+      totalCvCreators,
+      totalCvTemplates: totalCvTemplates,
     };
 
     return successResponse(res, "Dashboard stats fetched successfully", stats);
@@ -40,30 +33,60 @@ const dashboardStats = async (req, res) => {
 
 const getUsersMonthly = async (req, res) => {
   try {
-    const { month, year } = req.body;
+    const currentYear = new Date().getFullYear();
 
-    if (!month || !year) {
-      return badRequestResponse(res, "Month and Year are required fields.", null);
-    }
+    const startOfYear = new Date(`${currentYear}-01-01T00:00:00.000Z`);
+    const endOfYear = new Date(`${currentYear + 1}-01-01T00:00:00.000Z`);
 
-    if (month < 1 || month > 12) {
-      return badRequestResponse(res, "Invalid month value. It should be between 1 and 12.", null);
-    }
+    const result = await usersModel.aggregate([
+      {
+        $match: {
+          role: "user",
+          createdAt: {
+            $gte: startOfYear,
+            $lt: endOfYear,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          usersCreated: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          month: "$_id",
+          usersCreated: 1,
+        },
+      },
+    ]);
 
-    // Calculate the start and end of the month
-    const startOfMonth = new Date(year, month - 1, 1);
-    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
 
-    const usersCreated = await usersModel.countDocuments({
-      role: "user",
-      createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+    const monthlyData = Array.from({ length: 12 }, (_, i) => {
+      const found = result.find((r) => r.month === i + 1);
+      return {
+        monthNumber: i + 1,
+        monthName: monthNames[i],
+        usersCreated: found ? found.usersCreated : 0,
+      };
     });
 
-    return successResponse(res, `Total users created in ${month}/${year} fetched successfully.`, { usersCreated });
+    return successResponse(res, `Monthly user data for year ${currentYear} fetched successfully.`, {
+      year: currentYear,
+      monthlyData,
+    });
   } catch (error) {
-    console.log("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch Block:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later.");
   }
 };
+
+
 
 export { dashboardStats, getUsersMonthly };

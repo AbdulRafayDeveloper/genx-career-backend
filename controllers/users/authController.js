@@ -99,46 +99,54 @@ const loginUser = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
+    console.log("pass 1");
+
     const userId = req.user._id;
+
+    console.log("pass 1", userId);
+
     if (!userId) {
-      return unauthorizedResponse(
-        res,
-        "The user is not authorized for this action",
-        null
-      );
+      return unauthorizedResponse(res, "The user is not authorized for this action", null);
     }
+
     const { previousPassword, newPassword, confirmPassword } = req.body;
+
     if (!previousPassword || !newPassword || !confirmPassword) {
       return badRequestResponse(res, "All fields are mandatory", null);
     }
+
     const user = await findOneUser({ _id: userId });
+
     if (!user) {
       return notFoundResponse(res, "User not found", null);
     }
+
     const checkPassword = await bcrypt.compare(previousPassword, user.password);
+
     if (!checkPassword) {
       return badRequestResponse(res, "Previous password is incorrect", null);
     }
+
     if (previousPassword === newPassword) {
-      return badRequestResponse(
-        res,
-        "Previous password and new password should not be the same",
-        null
-      );
+      return badRequestResponse(res, "Previous password and new password should not be the same", null);
     }
+
     if (newPassword !== confirmPassword) {
       return badRequestResponse(res, "Passwords do not match", null);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
-    await user.save();
+
+    const updatedUser = await user.save();
+
+    if (!updatedUser) {
+      return serverErrorResponse(res, "Unable to change password. Please try again later");
+    }
+
     return successResponse(res, "Password has been changed successfully", user);
   } catch (error) {
-    return serverErrorResponse(
-      res,
-      "Internal Server error Please try again later"
-    );
+    return serverErrorResponse(res, "Internal Server error Please try again later");
   }
 };
 
@@ -146,11 +154,16 @@ const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
+    console.log("email:", email);
+
     if (!email) {
       return badRequestResponse(res, "Email is required", null);
     }
 
     const user = await findOneUser({ email });
+
+    console.log("user:", user);
+
     if (!user) {
       return notFoundResponse(res, "User not found", null);
     }
@@ -158,8 +171,15 @@ const forgetPassword = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = otp;
     user.otpCreatedAt = new Date().toISOString();
-    user.otpExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    // user.otpExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     await user.save();
+
+    console.log("otp:", otp);
+
+    if (!otp) {
+      return serverErrorResponse(res, "Unable to send OTP. Please try again later");
+    }
 
     const subject = "Reset Your Password";
     const emailContent = generateForgetPasswordTemplate(user.name, otp);
@@ -168,32 +188,29 @@ const forgetPassword = async (req, res) => {
 
     console.log("process.env.FORGET_PASSWORD_TOKEN:", process.env.FORGET_PASSWORD_TOKEN);
 
+
     const otpToken = jwt.sign(
-      {
-        email,
-        otp,
-      },
+      { email, otp },
       process.env.FORGET_PASSWORD_TOKEN,
       { expiresIn: "1d" }
     );
 
-    return successResponse(
-      res,
-      "OTP has been successfully sent to your email",
-      otpToken
-    );
+    console.log("otpToken:", otpToken);
+
+    return successResponse(res, "OTP has been successfully sent to your email", otpToken);
   } catch (error) {
     console.log(error);
-    return serverErrorResponse(
-      res,
-      "Internal server error. Please try again later!"
-    );
+    return serverErrorResponse(res, "Internal server error. Please try again later!");
   }
 };
 const verifyOtp = async (req, res) => {
   try {
     const { userOtp } = req.body;
     const { email, otp } = req.otpData;
+
+    console.log("email:", email);
+    console.log("otp:", otp);
+    console.log("userOtp:", userOtp);
 
     // console.log("userOtp:", userOtp);
     // console.log("email:", email);
@@ -212,16 +229,13 @@ const verifyOtp = async (req, res) => {
     console.log("user after verification:", user);
 
     if (!user) {
-      return notFoundResponse(
-        res,
-        "No user found with this email or OTP is invalid",
-        null
-      );
+      return notFoundResponse(res, "No user found with this email or OTP is invalid", null);
     }
 
     const otpAge = Date.now() - new Date(user.otpCreatedAt).getTime();
 
-    const otpValidityDuration = 60 * 1000;
+    // const otpValidityDuration = 60 * 1000;
+    const otpValidityDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
 
     console.log("otpAge:", otpAge);
     console.log("otpValidityDuration:", otpValidityDuration);
@@ -240,7 +254,11 @@ const verifyOtp = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    console.log("resetPasswordToken:", resetPasswordToken);
+
     await updateUser(user._id, { otp: null, otpCreatedAt: null });
+
+    console.log("user after resetPasswordToken:", user);
 
     return successResponse(res, "OTP has been verified successfully", resetPasswordToken);
   } catch (error) {
@@ -254,6 +272,10 @@ const resetPassword = async (req, res) => {
     const { newPassword, confirmPassword } = req.body;
     const { email } = req;
 
+    console.log("newPassword:", newPassword);
+    console.log("confirmPassword:", confirmPassword);
+    console.log("email:", email);
+
     if (!newPassword || !confirmPassword) {
       return badRequestResponse(res, "Both newPassword and confirmPassword are required", null);
     }
@@ -261,24 +283,88 @@ const resetPassword = async (req, res) => {
     if (newPassword !== confirmPassword) {
       return badRequestResponse(res, "New password and confirm password do not match", null);
     }
+
     const user = await findOneUser({ email });
+
+    console.log("user:", user);
+
     if (!user) {
       return notFoundResponse(res, "No user found with this email", null);
     }
+
     const isMatch = await bcrypt.compare(newPassword, user.password);
+
+    console.log("isMatch:", isMatch);
+
     if (isMatch) {
-      return conflictResponse(
-        res,
-        "New password must be different from the previous password",
-        null
-      );
+      return conflictResponse(res, "New password must be different from the previous password", null);
     }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
-    await user.save();
+    const updatedUser = await user.save();
 
+    console.log("updatedUser:", updatedUser);
+
+
+    if (!updatedUser) {
+      return serverErrorResponse(res, "Unable to reset password. Please try again later");
+    }
+
+    console.log("Password has been successfully reset");
     return successResponse(res, "Password has been successfully reset", null);
   } catch (error) {
+    return serverErrorResponse(res, "Internal server error. Please try again later!", error.message);
+  }
+};
+
+const resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    console.log("Resend OTP email:", email);
+
+    if (!email) {
+      return badRequestResponse(res, "Email is required", null);
+    }
+
+    const user = await findOneUser({ email });
+
+    console.log("User found for resend:", user);
+
+    if (!user) {
+      return notFoundResponse(res, "User not found", null);
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.otp = otp;
+    user.otpCreatedAt = new Date().toISOString();
+    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes validity
+    await user.save();
+
+    console.log("Resent OTP:", otp);
+
+    if (!otp) {
+      return serverErrorResponse(res, "Unable to resend OTP. Please try again later");
+    }
+
+    const subject = "Your OTP Code (Resent)";
+    const emailContent = generateForgetPasswordTemplate(user.name, otp);
+
+    await sendEmail(email, subject, emailContent);
+
+    const otpToken = jwt.sign(
+      { email, otp },
+      process.env.FORGET_PASSWORD_TOKEN,
+      { expiresIn: "1d" }
+    );
+
+    console.log("Resend OTP Token:", otpToken);
+
+    return successResponse(res, "OTP has been resent to your email", otpToken);
+  } catch (error) {
+    console.log(error);
     return serverErrorResponse(res, "Internal server error. Please try again later!", error.message);
   }
 };
@@ -323,4 +409,4 @@ const verifyUserEmail = async (req, res) => {
   }
 }
 
-export { registerUser, loginUser, changePassword, forgetPassword, verifyOtp, resetPassword, verifyUserEmail };
+export { registerUser, loginUser, changePassword, forgetPassword, verifyOtp, resetPassword, resendOtp, verifyUserEmail };

@@ -1,4 +1,3 @@
-
 import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
 import jobsTitleforFetching from '../../constants/jobsData.js';
 import { getDateFilter } from "../../helpers/jobsHelpers.js";
@@ -28,7 +27,7 @@ const scrapJobs = async (req, res) => {
       { $set: { pageNumber: page } }
     );
 
-    const limit = 1;
+    const limit = process.env.JOBS_FETCH_LIMIT;
     const posted_at_max_age_days = 15;
     const include_total_results = false;
     const job_title_or = jobsTitleforFetching;
@@ -105,6 +104,27 @@ const scrapJobs = async (req, res) => {
   } catch (error) {
     console.log("Error Message in Catch BLock:", error.message);
     return serverErrorResponse(res, "Internal server error. Please try again later");
+  }
+};
+
+const deleteOldJobs = async (req, res) => {
+  try {
+    const daysThreshold = process.env.JOBS_DELETE_THRESHOLD_DAYS;
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - daysThreshold);
+
+    // Delete jobs older than thresholdDate
+    const deleteResult = await jobsModel.deleteMany({
+      jobPostDate: { $lt: thresholdDate }
+    });
+
+    return successResponse(res, `${deleteResult.deletedCount} old jobs deleted successfully`, {
+      deletedJobsCount: deleteResult.deletedCount,
+      thresholdDate,
+    });
+  } catch (error) {
+    console.log("Error in deleteOldJobs:", error.message);
+    return serverErrorResponse(res, "Failed to delete old jobs. Please try again later.");
   }
 };
 
@@ -314,4 +334,4 @@ const exportJobsToExcel = async (req, res) => {
   }
 };
 
-export { scrapJobs, getOneJob, deleteJob, getAllJobs, exportJobsToExcel };
+export { scrapJobs, deleteOldJobs, getOneJob, deleteJob, getAllJobs, exportJobsToExcel };

@@ -1,5 +1,5 @@
 import multer from "multer";
-import { badRequestResponse } from "../helpers/apiResponsesHelpers.js";
+import { badRequestResponse } from "../helpers/responsesHelper/apiResponsesHelpers.js";
 
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {

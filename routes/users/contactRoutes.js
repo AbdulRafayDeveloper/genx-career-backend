@@ -5,10 +5,10 @@ import newContactValidation from "../../middleware/newContactValidation.js";
 
 const router = express.Router();
 
-router.post("/contactus", newContactValidation, createNewContact);
-router.get("/contactus/:id", authenticateLoginToken, getOneContact);
-router.get("/contactUsList/export", authenticateLoginToken, exportContactsToExcel);
-router.get("/contactus", authenticateLoginToken, getAllContacts);
-router.delete("/contactus/:id", authenticateLoginToken, deleteOneContact);
+router.post("/contact-us", newContactValidation, createNewContact);
+router.get("/contact-us/:id", authenticateLoginToken, getOneContact);
+router.get("/contact-us-list/export", authenticateLoginToken, exportContactsToExcel);
+router.get("/contact-us", authenticateLoginToken, getAllContacts);
+router.delete("/contact-us/:id", authenticateLoginToken, deleteOneContact);
 
 export default router;

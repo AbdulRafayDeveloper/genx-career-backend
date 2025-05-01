@@ -1,5 +1,5 @@
-import { badRequestResponse, serverErrorResponse, } from "../helpers/apiResponsesHelpers.js";
-import userRegisterFieldsValidation from "../helpers/validations/userRegisterFieldsValidation.js";
+import { badRequestResponse, serverErrorResponse, } from "../helpers/responsesHelper/apiResponsesHelpers.js";
+import userRegisterFieldsValidation from "../helpers/validationsHelper/userRegisterFieldsValidation.js";
 
 const userRegisterValidation = async (req, res, next) => {
   try {

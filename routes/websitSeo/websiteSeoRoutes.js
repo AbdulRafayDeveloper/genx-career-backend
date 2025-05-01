@@ -8,8 +8,8 @@ const router = express.Router();
 
 router.post('/seo', authenticateLoginToken, addWebsiteSeo);
 router.get('/seo', getAllWebsiteSeo);
-router.get('/getWebsiteSeoByPageName', getWebsiteSeoByPageName);
-router.get('/getOneSeoPage/:id', getOneWebsiteSeo);
+router.get('/seo-page', getWebsiteSeoByPageName);
+// router.get('/getOneSeoPage/:id', getOneWebsiteSeo);
 router.put('/seo/:id', authenticateLoginToken, updateWebsiteSeo);
 router.delete('/seo/:id', authenticateLoginToken, deleteWebsiteSeo);
 

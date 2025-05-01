@@ -1,11 +1,11 @@
-import WebsiteSeo from "../../models/WebsiteSeo.js";
+import WebsiteSeo from "../../models/WebsiteSeoModel.js";
 import mongoose from "mongoose";
 import {
     notFoundResponse,
     badRequestResponse,
     serverErrorResponse,
     successResponse
-} from "../../helpers/apiResponsesHelpers.js";
+} from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 
 const addWebsiteSeo = async (req, res) => {
     try {
@@ -73,30 +73,30 @@ const getWebsiteSeoByPageName = async (req, res) => {
     }
 };
 
-const getOneWebsiteSeo = async (req, res) => {
-    try {
-        const { id } = req.params;
+// const getOneWebsiteSeo = async (req, res) => {
+//     try {
+//         const { id } = req.params;
 
-        if (!id) {
-            return badRequestResponse(res, "SEO ID is required.");
-        }
+//         if (!id) {
+//             return badRequestResponse(res, "SEO ID is required.");
+//         }
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return badRequestResponse(res, "Invalid SEO ID format.");
-        }
+//         if (!mongoose.Types.ObjectId.isValid(id)) {
+//             return badRequestResponse(res, "Invalid SEO ID format.");
+//         }
 
-        const seoEntry = await WebsiteSeo.findById(id);
+//         const seoEntry = await WebsiteSeo.findById(id);
 
-        if (!seoEntry) {
-            return notFoundResponse(res, "SEO entry not found.");
-        }
+//         if (!seoEntry) {
+//             return notFoundResponse(res, "SEO entry not found.");
+//         }
 
-        return successResponse(res, "Website SEO entry retrieved successfully.", seoEntry);
-    } catch (error) {
-        console.log("Error in getOneWebsiteSeo:", error);
-        return serverErrorResponse(res, "An unexpected issue occurred.");
-    }
-};
+//         return successResponse(res, "Website SEO entry retrieved successfully.", seoEntry);
+//     } catch (error) {
+//         console.log("Error in getOneWebsiteSeo:", error);
+//         return serverErrorResponse(res, "An unexpected issue occurred.");
+//     }
+// };
 
 const updateWebsiteSeo = async (req, res) => {
     try {

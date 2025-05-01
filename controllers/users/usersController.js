@@ -1,7 +1,6 @@
-import { getUserById, deleteUser, countUsers, listUsers } from "../../services/userServices.js";
 import cvMatchersModel from "../../models/cvMatchersModel.js";
 import usersModel from "../../models/usersModel.js";
-import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
+import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import XLSX from "xlsx";
@@ -21,7 +20,7 @@ const getAllUsersController = async (req, res) => {
       ];
     }
 
-    const totalRecords = await countUsers(query);
+    const totalRecords = await Users.countDocuments(query);
 
     if (!totalRecords) {
       return notFoundResponse(res, "No users found.", null);
@@ -29,7 +28,7 @@ const getAllUsersController = async (req, res) => {
 
     const totalPages = Math.ceil(totalRecords / pageSize);
     const skip = (page - 1) * pageSize;
-    const users = await listUsers(query, skip, pageSize);
+    const users = await Users.find(query).sort({ createdAt: -1 }).skip(skip).limit(pageSize);
 
     if (!users || users.length === 0) {
       return notFoundResponse(res, "No users found for the given page.", null);
@@ -57,7 +56,7 @@ const getOneUserController = async (req, res) => {
       return badRequestResponse(res, "Invalid ID format", null);
     }
 
-    const user = await getUserById(id);
+    const user = await Users.findById(id);
 
     if (!user) {
       return notFoundResponse(res, "Record not found in the database", null);
@@ -82,13 +81,13 @@ const deleteUserController = async (req, res) => {
       return badRequestResponse(res, "Invalid ID format", null);
     }
 
-    const user = await getUserById(id);
+    const user = await Users.findById(id);
 
     if (!user) {
       return notFoundResponse(res, "The user is not found!", null);
     }
 
-    const userDelete = await deleteUser(user._id);
+    const userDelete = await Users.findByIdAndDelete(id);
 
     if (!userDelete) {
       return serverErrorResponse(res, "Unable to delete user. Please try again later");
@@ -154,7 +153,7 @@ const userProfileUpdate = async (req, res) => {
       return badRequestResponse(res, "Invalid ID format", null);
     }
 
-    const user = await getUserById(id);
+    const user = await Users.findById(id);
 
     if (!user) {
       return notFoundResponse(res, "The user is not found!", null);

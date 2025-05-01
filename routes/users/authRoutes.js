@@ -11,11 +11,11 @@ router.post("/register", userRegisterValidation, registerUser);
 router.post("/verify-email", verifyUserEmail);
 router.post("/login", userLoginValidation, loginUser);
 // forget password
-router.post("/forgetpassword", forgetPassword);
-router.post("/verifyotp", authenticateOtpToken, verifyOtp);
-router.post("/resetpassword", authenticateEmailToken, resetPassword);
+router.post("/forget-password", forgetPassword);
+router.post("/verify-otp", authenticateOtpToken, verifyOtp);
+router.post("/reset-password", authenticateEmailToken, resetPassword);
 router.post("/resend-otp", resendOtp);
 // change password
-router.post("/changepassword", authenticateLoginToken, changePassword);
+// router.post("/changepassword", authenticateLoginToken, changePassword);
 
 export default router;

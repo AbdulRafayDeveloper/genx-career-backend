@@ -1,5 +1,4 @@
-import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse, conflictResponse, } from "../../helpers/apiResponsesHelpers.js";
-import { findUser, findOneUser, createUser, updateUser } from "../../services/userServices.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse, conflictResponse, } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import generateForgetPasswordTemplate from "../../helpers/emailHelpers/forgetPasswordTemplate.js";
@@ -15,7 +14,7 @@ const registerUser = async (req, res) => {
       return badRequestResponse(res, "Please provide all fields", null);
     }
 
-    const user = await findUser({ email });
+    const user = await UserModel.findOne({ email });
 
     if (user) {
       return conflictResponse(res, "User with this email already exists", null);
@@ -23,15 +22,17 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await createUser({
+    const newUser = new UserModel({
       name,
       email,
       password: hashedPassword,
-    });
+    })
 
-    if (newUser) {
+    const savedUser = await newUser.save();
+
+    if (savedUser) {
       const token = jwt.sign(
-        { userId: newUser._id },
+        { userId: savedUser._id },
         process.env.JWT_SECRET_KEY,
         { expiresIn: "1h" }
       );
@@ -64,7 +65,7 @@ const loginUser = async (req, res) => {
       return badRequestResponse(res, "All fields are mandatory", null);
     }
 
-    const user = await findOneUser({ email });
+    const user = await UserModel.findOne({ email });
 
     if (!user) {
       return notFoundResponse(res, "This Account is not registered.", null);
@@ -97,58 +98,58 @@ const loginUser = async (req, res) => {
   }
 };
 
-const changePassword = async (req, res) => {
-  try {
-    console.log("pass 1");
+// const changePassword = async (req, res) => {
+//   try {
+//     console.log("pass 1");
 
-    const userId = req.user._id;
+//     const userId = req.user._id;
 
-    console.log("pass 1", userId);
+//     console.log("pass 1", userId);
 
-    if (!userId) {
-      return unauthorizedResponse(res, "The user is not authorized for this action", null);
-    }
+//     if (!userId) {
+//       return unauthorizedResponse(res, "The user is not authorized for this action", null);
+//     }
 
-    const { previousPassword, newPassword, confirmPassword } = req.body;
+//     const { previousPassword, newPassword, confirmPassword } = req.body;
 
-    if (!previousPassword || !newPassword || !confirmPassword) {
-      return badRequestResponse(res, "All fields are mandatory", null);
-    }
+//     if (!previousPassword || !newPassword || !confirmPassword) {
+//       return badRequestResponse(res, "All fields are mandatory", null);
+//     }
 
-    const user = await findOneUser({ _id: userId });
+//     const user = await UserModel.findById(userId);
 
-    if (!user) {
-      return notFoundResponse(res, "User not found", null);
-    }
+//     if (!user) {
+//       return notFoundResponse(res, "User not found", null);
+//     }
 
-    const checkPassword = await bcrypt.compare(previousPassword, user.password);
+//     const checkPassword = await bcrypt.compare(previousPassword, user.password);
 
-    if (!checkPassword) {
-      return badRequestResponse(res, "Previous password is incorrect", null);
-    }
+//     if (!checkPassword) {
+//       return badRequestResponse(res, "Previous password is incorrect", null);
+//     }
 
-    if (previousPassword === newPassword) {
-      return badRequestResponse(res, "Previous password and new password should not be the same", null);
-    }
+//     if (previousPassword === newPassword) {
+//       return badRequestResponse(res, "Previous password and new password should not be the same", null);
+//     }
 
-    if (newPassword !== confirmPassword) {
-      return badRequestResponse(res, "Passwords do not match", null);
-    }
+//     if (newPassword !== confirmPassword) {
+//       return badRequestResponse(res, "Passwords do not match", null);
+//     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+//     const hashedPassword = await bcrypt.hash(newPassword, 10);
+//     user.password = hashedPassword;
 
-    const updatedUser = await user.save();
+//     const updatedUser = await user.save();
 
-    if (!updatedUser) {
-      return serverErrorResponse(res, "Unable to change password. Please try again later");
-    }
+//     if (!updatedUser) {
+//       return serverErrorResponse(res, "Unable to change password. Please try again later");
+//     }
 
-    return successResponse(res, "Password has been changed successfully", user);
-  } catch (error) {
-    return serverErrorResponse(res, "Internal Server error Please try again later");
-  }
-};
+//     return successResponse(res, "Password has been changed successfully", user);
+//   } catch (error) {
+//     return serverErrorResponse(res, "Internal Server error Please try again later");
+//   }
+// };
 
 const forgetPassword = async (req, res) => {
   try {
@@ -160,7 +161,7 @@ const forgetPassword = async (req, res) => {
       return badRequestResponse(res, "Email is required", null);
     }
 
-    const user = await findOneUser({ email });
+    const user = await UserModel.findOne({ email });
 
     console.log("user:", user);
 
@@ -224,7 +225,7 @@ const verifyOtp = async (req, res) => {
       return badRequestResponse(res, "Invalid OTP", null);
     }
 
-    const user = await findOneUser({ email, otp });
+    const user = await UserModel.findOne({ email, otp });
 
     console.log("user after verification:", user);
 
@@ -244,7 +245,7 @@ const verifyOtp = async (req, res) => {
     console.log("otp:", user.otp);
 
     if (otpAge > otpValidityDuration) {
-      await updateUser(user._id, { otp: null, otpCreatedAt: null });
+      await UserModel.findOneAndUpdate({ email }, { otp: null, otpCreatedAt: null });
       return badRequestResponse(res, "OTP has expired", null);
     }
 
@@ -256,7 +257,13 @@ const verifyOtp = async (req, res) => {
 
     console.log("resetPasswordToken:", resetPasswordToken);
 
-    await updateUser(user._id, { otp: null, otpCreatedAt: null });
+    user.otp = null;
+    user.otpCreatedAt = null;
+    const updatedUser = await user.save();
+
+    if (!updatedUser) {
+      return serverErrorResponse(res, "Unable to update user. Please try again later");
+    }
 
     console.log("user after resetPasswordToken:", user);
 
@@ -284,7 +291,7 @@ const resetPassword = async (req, res) => {
       return badRequestResponse(res, "New password and confirm password do not match", null);
     }
 
-    const user = await findOneUser({ email });
+    const user = await UserModel.findOne({ email });
 
     console.log("user:", user);
 
@@ -328,7 +335,7 @@ const resendOtp = async (req, res) => {
       return badRequestResponse(res, "Email is required", null);
     }
 
-    const user = await findOneUser({ email });
+    const user = await UserModel.findOne({ email });
 
     console.log("User found for resend:", user);
 

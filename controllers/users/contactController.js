@@ -1,5 +1,4 @@
-import { findContactByEmail, createContact, getContactById, deleteContact, countContacts, listContacts, updateContactMessages } from "../../services/contactServices.js";
-import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/apiResponsesHelpers.js";
+import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 import sendEmail from "../../helpers/emailHelpers/emailHelper.js";
 import generateThankYouTemplate from "../../helpers/emailHelpers/thankYouTemplate.js";
 import contactsModel from "../../models/contactsModel.js";
@@ -13,11 +12,12 @@ const createNewContact = async (req, res) => {
     if (!name || !email || !message) {
       return badRequestResponse(res, "All fields are mandatory", null);
     }
-    const contact = await createContact({ name, email, message });
+    const contact = new contactsModel({ name, email, message });
+    const newContact = await contact.save();
 
-    if (contact) {
+    if (newContact) {
       await sendEmail(email, "Thanks for Contacting Us!", generateThankYouTemplate());
-      return successResponse(res, "Message has been delivered successfully", contact);
+      return successResponse(res, "Message has been delivered successfully", newContact);
     } else {
       return serverErrorResponse(res, "Error while sending message");
     }
@@ -38,7 +38,7 @@ const getOneContact = async (req, res) => {
       return badRequestResponse(res, "Invalid ID format", null);
     }
 
-    const contact = await getContactById(id);
+    const contact = await contactsModel.findById(id);
 
     if (!contact) {
       return notFoundResponse(res, "Record not found in the database", null);
@@ -64,7 +64,7 @@ const getAllContacts = async (req, res) => {
       ];
     }
 
-    const totalRecords = await countContacts(query);
+    const totalRecords = await contactsModel.countDocuments(query);
 
     if (!totalRecords) {
       return notFoundResponse(res, "No contacts found.", null);
@@ -72,7 +72,10 @@ const getAllContacts = async (req, res) => {
 
     const totalPages = Math.ceil(totalRecords / pageSize);
     const skip = (page - 1) * pageSize;
-    const contacts = await listContacts(query, skip, pageSize);
+    const contacts = await contactsModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize);
 
     if (!contacts || contacts.length === 0) {
       return notFoundResponse(res, "No contacts found for the given page.", null);
@@ -99,13 +102,13 @@ const deleteOneContact = async (req, res) => {
       return badRequestResponse(res, "Invalid ID format", null);
     }
 
-    const contact = await getContactById(id);
+    const contact = await contactsModel.findById(id);
 
     if (!contact) {
       return notFoundResponse(res, "No Contact found", null);
     }
 
-    const contactDelete = await deleteContact(contact);
+    const contactDelete = await contactsModel.findByIdAndDelete(id);
 
     if (!contactDelete) {
       return serverErrorResponse(res, "Unable to delete contact. Please try again later");

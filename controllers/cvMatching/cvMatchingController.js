@@ -1,5 +1,5 @@
-import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/apiResponsesHelpers.js";
-import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText } from "../../helpers/cvMatchingHelpers.js";
+import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
+import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText } from "../../helpers/cvMatchingHelper/cvMatchingHelpers.js";
 import usersModel from "../../models/usersModel.js";
 import jobsModel from "../../models/jobListingsModel.js";
 import cvMatchersModel from "../../models/cvMatchersModel.js";

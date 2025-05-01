@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-import CvTemplate from "../../models/cvTemplates.js";
+import CvTemplate from "../../models/cvTemplatesModel.js";
 import {
   badRequestResponse,
   notFoundResponse,
   successResponse,
   serverErrorResponse,
-} from "../../helpers/apiResponsesHelpers.js";
+} from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 import { renameFileWithUuid, retryDeleteFile } from "../../helpers/cvTemplatesHelper/cvTemplateHelper.js";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import { ref, getDownloadURL, uploadBytes } from "firebase/storage";

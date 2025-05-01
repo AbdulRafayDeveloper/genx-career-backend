@@ -6,10 +6,10 @@ import { cvTemplateUpdateMiddleware } from "../../middleware/cvTemplateUpdateMid
 
 const router = express.Router();
 
-router.post("/cvTemplate", authenticateLoginToken, cvTemplateUploadMiddleware, addCvTemplate);
-router.get("/cvTemplate/:id", getOneCvTemplate);
-router.get("/cvTemplates", getAllCvTemplates);
-router.put("/cvTemplate/:id", authenticateLoginToken, cvTemplateUpdateMiddleware, updateCvTemplate);
-router.delete("/cvTemplate/:id", authenticateLoginToken, deleteCvTemplate);
+router.post("/cv-templates", authenticateLoginToken, cvTemplateUploadMiddleware, addCvTemplate);
+router.get("/cv-templates/:id", getOneCvTemplate);
+router.get("/cv-templates", getAllCvTemplates);
+router.put("/cv-templates/:id", authenticateLoginToken, cvTemplateUpdateMiddleware, updateCvTemplate);
+router.delete("/cv-templates/:id", authenticateLoginToken, deleteCvTemplate);
 
 export default router;

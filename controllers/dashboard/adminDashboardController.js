@@ -1,9 +1,9 @@
-import { badRequestResponse, serverErrorResponse, successResponse } from "../../helpers/apiResponsesHelpers.js";
+import { badRequestResponse, serverErrorResponse, successResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 import usersModel from '../../models/usersModel.js';
 import contactsModel from '../../models/contactsModel.js';
 import jobsModel from '../../models/jobListingsModel.js';
 import cvMatchersModel from '../../models/cvMatchersModel.js';
-import cvTemplates from '../../models/cvTemplates.js';
+import cvTemplates from '../../models/cvTemplatesModel.js';
 import cvCreators from '../../models/cvCreatorsModel.js';
 
 const dashboardStats = async (req, res) => {

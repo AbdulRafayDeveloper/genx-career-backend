@@ -1,6 +1,6 @@
 import express from "express";
 import { userCvMatching, getOneCvMatcher, getAllCvMatchers, deleteCvMatcher, exportCvMatchersToExcel } from "../../controllers/cvMatching/cvMatchingController.js";
-import { upload } from "../../helpers/pdfStoragehelpers.js";
+import { upload } from "../../helpers/fileHelper/pdfStoragehelpers.js";
 import { authenticateLoginToken, userAuthenticateLoginToken } from "../../middleware/userAuthorization.js";
 
 const router = express.Router();

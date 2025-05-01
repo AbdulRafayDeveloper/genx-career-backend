@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { badRequestResponse, serverErrorResponse } from "../apiResponsesHelpers.js";
+import { badRequestResponse, serverErrorResponse } from "../responsesHelper/apiResponsesHelpers.js";
 import { ref, deleteObject } from "firebase/storage";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 

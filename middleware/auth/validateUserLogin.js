@@ -4,7 +4,7 @@ import userLoginFieldsValidation from "../../helpers/validationsHelper/userLogin
 const validateUserLogin = async (req, res, next) => {
   try {
     const { error } = await userLoginFieldsValidation.validate(req.body, {
-      abortEarly: false,
+      abortEarly: true,
     });
 
     if (error) {

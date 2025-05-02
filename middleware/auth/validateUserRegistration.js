@@ -4,7 +4,7 @@ import userRegisterFieldsValidation from "../../helpers/validationsHelper/userRe
 const validateUserRegistration = async (req, res, next) => {
   try {
     const { error } = await userRegisterFieldsValidation.validate(req.body, {
-      abortEarly: false,
+      abortEarly: true,
     });
 
     if (error) {

@@ -15,11 +15,11 @@
     "crons": [
         {
             "path": "/api/scrap-jobs",
-            "schedule": "5 10 * * *"
+            "schedule": "13 10 * * *"
         },
         {
             "path": "/api/delete-old-jobs",
-            "schedule": "6 10 * * *"
+            "schedule": "14 10 * * *"
         }
     ]
 }

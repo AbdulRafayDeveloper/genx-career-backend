@@ -19,7 +19,7 @@
         },
         {
             "path": "/api/delete-old-jobs",
-            "schedule": "52 9 * * *"
+            "schedule": "59 9 * * *"
         }
     ]
 }

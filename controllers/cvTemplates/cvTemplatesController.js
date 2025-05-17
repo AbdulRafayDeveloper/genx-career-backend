@@ -120,6 +120,11 @@ const saveUpdatedCvTemplate = async (req, res) => {
   const { name } = req.body;
   const image = req.file;
 
+  const allowedTemplates = ["template1", "template2", "template3"];
+  if (!allowedTemplates.includes(name)) {
+    return badRequestResponse(res, "Invalid template name. Only 'template1', 'template2', or 'template3' are allowed.", null);
+  }
+
   console.log("req.file: ", req.file);
   console.log("req.body: ", req.body);
   console.log("req.params: ", req.params);

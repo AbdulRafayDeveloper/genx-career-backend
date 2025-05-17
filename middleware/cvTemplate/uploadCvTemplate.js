@@ -18,11 +18,20 @@ const upload = multer({ storage, fileFilter }).single("template");
 
 export const uploadCvTemplate = (req, res, next) => {
     upload(req, res, async err => {
+        console.log("err: ", err);
         if (err) return badRequestResponse(res, "Upload error", err.message);
 
         if (!req.file) return badRequestResponse(res, "No template file uploaded", null);
 
         if (!req.body.name) return badRequestResponse(res, "Template name is required", null);
+
+        console.log("req.body: ", req.body);
+        console.log("req.file: ", req.file);
+
+        const allowedTemplates = ["template1", "template2", "template3"];
+        if (!allowedTemplates.includes(req.body.name)) {
+            return badRequestResponse(res, "Invalid template name. Only 'template1', 'template2', or 'template3' are allowed.", null);
+        }
 
         const existingTemplate = await CvTemplate.findOne({ name: req.body.name });
 
@@ -34,6 +43,7 @@ export const uploadCvTemplate = (req, res, next) => {
         }
 
         try {
+            console.log("req.file 2: ", req.file);
             const ext = path.extname(req.file.originalname);
             const fileName = `${req.body.name}${ext}`;
             const firebasePath = `cvTemplates/${fileName}`;

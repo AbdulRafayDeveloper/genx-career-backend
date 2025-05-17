@@ -15,7 +15,7 @@
     "crons": [
         {
             "path": "/api/scrap-jobs",
-            "schedule": "17 10 * * *"
+            "schedule": "27 10 * * *"
         }
     ]
 }

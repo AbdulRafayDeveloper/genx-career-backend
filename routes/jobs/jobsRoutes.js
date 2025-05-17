@@ -4,7 +4,7 @@ import { verifyAdminToken } from "../../middleware/auth/authorizeUser.js";
 
 const router = express.Router();
 
-router.get("/scrap-jobs", scrapJobs);
+router.get("/scrap-new-jobs", scrapJobs);
 router.get("/delete-old-jobs", deleteOldJobs);
 router.get("/jobs", getAllJobs);
 router.get("/job/:id", getOneJob);

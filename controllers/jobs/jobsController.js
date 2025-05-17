@@ -17,6 +17,7 @@ const scrapJobs = async (req, res) => {
 
     let page = pageNumberRecord.pageNumber;
     page += 1;
+    
 
     if (page === 5) {
       page = 0;
@@ -100,6 +101,7 @@ const scrapJobs = async (req, res) => {
       JobsSavedInDB: savedJobsCount,
       JobsAlreadyExistInDB: jobData.length - savedJobsCount,
     });
+
 
   } catch (error) {
     console.log("Error Message in Catch BLock:", error.message);

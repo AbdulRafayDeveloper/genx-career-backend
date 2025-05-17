@@ -14,8 +14,8 @@
     ],
     "crons": [
         {
-            "path": "/api/scrap-new-jobs",
-            "schedule": "40 10 * * *"
+            "path": "/api/scrap-all-new-jobs",
+            "schedule": "43 10 * * *"
         }
     ]
 }

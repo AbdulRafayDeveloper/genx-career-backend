@@ -92,6 +92,7 @@ const generateCV = async (req, res) => {
 
     const uniqueId = uuidv4();
     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
+    console.log("sanitizedName: ", sanitizedName);
     const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
     const filePath = path.join(__dirname, "../../public", fileName);
     fs.writeFileSync(filePath, pdfBuffer);

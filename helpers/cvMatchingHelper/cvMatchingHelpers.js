@@ -15,13 +15,13 @@ const analyzeCVAndJobDescription = async (cvContent, jobDescription) => {
         const cvWordCount = cvContent.split(" ").length;
         const jdWordCount = jobDescription.split(" ").length;
 
-        if (cvWordCount > 850) {
-            return { status: 400, message: "Cv Content should not be more than 850 words" };
-        }
+        // if (cvWordCount > 850) {
+        //     return { status: 400, message: "Cv Content should not be more than 850 words" };
+        // }
 
-        if (jdWordCount > 500) {
-            return { status: 400, message: "Job Description Content should not be more than 500 words" };
-        }
+        // if (jdWordCount > 500) {
+        //     return { status: 400, message: "Job Description Content should not be more than 500 words" };
+        // }
 
         const chatCompletion = await groq.chat.completions.create({
             messages: [

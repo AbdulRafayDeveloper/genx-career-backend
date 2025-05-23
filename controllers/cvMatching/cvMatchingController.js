@@ -79,6 +79,7 @@ const userCvMatching = async (req, res) => {
         console.log("cvContent: cvContent", cvContent);
 
         let result = await analyzeCVAndJobDescription(cvContent, jobDescription);
+        console.log("result: ", result);
         result = result?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");
 
         // Check if user already exists in cvMatchers

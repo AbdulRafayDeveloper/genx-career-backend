@@ -94,7 +94,8 @@ const generateCV = async (req, res) => {
     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
     const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
     const filePath = path.join(__dirname, "../../public", fileName);
-    // fs.writeFileSync(filePath, pdfBuffer);
+    fs.writeFileSync(filePath, pdfBuffer);
+    console.log("PDF saved to:", filePath);
 
     res.json({
       message: "CV generated successfully",
@@ -105,7 +106,6 @@ const generateCV = async (req, res) => {
     res.status(500).json({ error: "Failed to generate CV." });
   }
 };
-
 
 const getOneCvCreator = async (req, res) => {
   try {
@@ -125,29 +125,49 @@ const getOneCvCreator = async (req, res) => {
       return notFoundResponse(res, "Record not found in the database", null);
     }
 
-    return successResponse(res, "CV Creator record fetched successfully", record);
+    return successResponse(
+      res,
+      "CV Creator record fetched successfully",
+      record
+    );
   } catch (error) {
     console.log("Error Message in Catch BLock:", error.message);
-    return serverErrorResponse(res, "Internal server error. Please try again later.");
+    return serverErrorResponse(
+      res,
+      "Internal server error. Please try again later."
+    );
   }
 };
 
 const getAllCvCreators = async (req, res) => {
   try {
-    const { pageNumber = 1, pageSize = 5, search = '' } = req.query;
+    const { pageNumber = 1, pageSize = 5, search = "" } = req.query;
 
-    const filters = search ? { userEmail: { $regex: search, $options: 'i' } } : {};
+    const filters = search
+      ? { userEmail: { $regex: search, $options: "i" } }
+      : {};
 
     const skip = (pageNumber - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const getAllRecords = await cvCreatorsModel.find(filters).skip(skip).limit(limit);
+    const getAllRecords = await cvCreatorsModel
+      .find(filters)
+      .skip(skip)
+      .limit(limit);
     const totalRecordsCount = await cvCreatorsModel.countDocuments(filters);
 
-    return successResponse(res, 'CV creators fetched successfully.', { cvCreators: getAllRecords, totalRecordsCount, pageNumber: parseInt(pageNumber), pageSize: limit, });
+    return successResponse(res, "CV creators fetched successfully.", {
+      cvCreators: getAllRecords,
+      totalRecordsCount,
+      pageNumber: parseInt(pageNumber),
+      pageSize: limit,
+    });
   } catch (error) {
     console.log("Error Message in Catch BLock:", error.message);
-    return serverErrorResponse(res, 'Internal server error. Please try again later.');
+    return serverErrorResponse(
+      res,
+      "Internal server error. Please try again later."
+    );
   }
 };
 
@@ -172,13 +192,19 @@ const deleteCvCreator = async (req, res) => {
     const deleteRecord = await cvCreatorsModel.findByIdAndDelete(id);
 
     if (!deleteRecord) {
-      return serverErrorResponse(res, "Unable to delete record. Please try again later");
+      return serverErrorResponse(
+        res,
+        "Unable to delete record. Please try again later"
+      );
     }
 
     return successResponse(res, "Record deleted successfully", deleteRecord);
   } catch (error) {
     console.log("Error Message in Catch BLock:", error.message);
-    return serverErrorResponse(res, "Internal Server Error. Please try again later");
+    return serverErrorResponse(
+      res,
+      "Internal Server Error. Please try again later"
+    );
   }
 };
 
@@ -202,15 +228,27 @@ const exportCvCreatorsToExcel = async (req, res) => {
     const worksheet = XLSX.utils.json_to_sheet(recordsData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Cv Creators");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "binary",
+    });
     const buffer = Buffer.from(excelBuffer, "binary");
-    res.setHeader("Content-Disposition", "attachment; filename=CvCreators_List.xlsx");
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=CvCreators_List.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
 
     res.send(buffer);
   } catch (error) {
     console.log("Error exporting records to Excel:", error.message);
-    return serverErrorResponse(res, "Failed to export records to Excel. Please try again later.");
+    return serverErrorResponse(
+      res,
+      "Failed to export records to Excel. Please try again later."
+    );
   }
 };
 

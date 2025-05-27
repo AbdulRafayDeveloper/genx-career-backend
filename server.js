@@ -17,7 +17,7 @@ const app = express();
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 const corsOptions = {
-  origin: "*", // Allow all origins
+  origin: "http://localhost:3000", // Allow all origins
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Origin",
@@ -31,6 +31,7 @@ const corsOptions = {
 app.use(express.json());
 app.use(cors(corsOptions));
 app.use(express.static("public"));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
 connectDb();
 const port = process.env.PORT || 8000;

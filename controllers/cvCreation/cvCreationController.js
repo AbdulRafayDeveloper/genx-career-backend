@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
 import XLSX from "xlsx";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
+import { firebaseStorage } from "../../config/firebaseConfig.js";
+import { ref, uploadBytes, getDownloadURL, getMetadata } from "firebase/storage";
 
 import {
   projectsToHtml,
@@ -22,6 +24,7 @@ import {
 
 import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import { fileURLToPath } from "url";
+import { successResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,7 +55,11 @@ const generateCV = async (req, res) => {
 
     console.log(templatePath);
     if (!fs.existsSync(templatePath)) {
-      return res.status(400).json({ error: "Invalid template name provided." });
+      return badRequestResponse(
+        res,
+        "Template not found. Please provide a valid template name.",
+        null
+      );
     }
 
     const template = fs.readFileSync(templatePath, "utf-8");
@@ -94,17 +101,42 @@ const generateCV = async (req, res) => {
     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
     console.log("sanitizedName: ", sanitizedName);
     const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
-    const filePath = path.join(__dirname, "../../public", fileName);
-    fs.writeFileSync(filePath, pdfBuffer);
-    console.log("PDF saved to:", filePath);
 
-    res.json({
-      message: "CV generated successfully",
-      downloadUrl: `/public/${fileName}`,
+    const firebasePath = `cv-collection/${fileName}`;
+    const fileRef = ref(firebaseStorage, firebasePath);
+
+    console.log("→ Uploading CV to Firebase at:", firebasePath);
+
+    // Upload to Firebase
+    await uploadBytes(fileRef, pdfBuffer, {
+      contentType: "application/pdf",
+    });
+
+    // Optional: check if file exists by getting metadata
+    try {
+      const metadata = await getMetadata(fileRef);
+      console.log("File uploaded successfully. Metadata:", metadata);
+    } catch (metaErr) {
+      console.error("Upload failed. Metadata not found.");
+      return serverErrorResponse(
+        res,
+        "Failed to retrieve file metadata. Please try again later."
+      );
+    }
+
+    // Get public URL
+    const downloadURL = await getDownloadURL(fileRef);
+
+    successResponse(res, "CV generated successfully", {
+      downloadUrl: downloadURL,
+      fileName: fileName,
     });
   } catch (error) {
     console.log("Error generating CV:", error);
-    res.status(500).json({ error: "Failed to generate CV." });
+    serverErrorResponse(
+      res,
+      "Failed to generate CV. Please try again later."
+    );
   }
 };
 

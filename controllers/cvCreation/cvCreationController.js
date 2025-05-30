@@ -6,7 +6,18 @@ import mongoose from "mongoose";
 import XLSX from "xlsx";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
-import { ref, uploadBytes, getDownloadURL, getMetadata } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  getMetadata,
+} from "firebase/storage";
+import {
+  successResponse,
+  badRequestResponse,
+  notFoundResponse,
+  serverErrorResponse,
+} from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 
 import {
   projectsToHtml,
@@ -24,7 +35,6 @@ import {
 
 import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import { fileURLToPath } from "url";
-import { successResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -133,10 +143,7 @@ const generateCV = async (req, res) => {
     });
   } catch (error) {
     console.log("Error generating CV:", error);
-    serverErrorResponse(
-      res,
-      "Failed to generate CV. Please try again later."
-    );
+    serverErrorResponse(res, "Failed to generate CV. Please try again later.");
   }
 };
 

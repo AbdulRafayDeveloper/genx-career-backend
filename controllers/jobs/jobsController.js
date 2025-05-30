@@ -119,26 +119,26 @@ const scrapJobs = async (req, res) => {
   }
 };
 
-const deleteOldJobs = async (req, res) => {
-  try {
-    const daysThreshold = process.env.JOBS_DELETE_THRESHOLD_DAYS;
-    const thresholdDate = new Date();
-    thresholdDate.setDate(thresholdDate.getDate() - daysThreshold);
+// const deleteOldJobs = async (req, res) => {
+//   try {
+//     const daysThreshold = process.env.JOBS_DELETE_THRESHOLD_DAYS;
+//     const thresholdDate = new Date();
+//     thresholdDate.setDate(thresholdDate.getDate() - daysThreshold);
 
-    // Delete jobs older than thresholdDate
-    const deleteResult = await jobsModel.deleteMany({
-      jobPostDate: { $lt: thresholdDate }
-    });
+//     // Delete jobs older than thresholdDate
+//     const deleteResult = await jobsModel.deleteMany({
+//       jobPostDate: { $lt: thresholdDate }
+//     });
 
-    return successResponse(res, `${deleteResult.deletedCount} old jobs deleted successfully`, {
-      deletedJobsCount: deleteResult.deletedCount,
-      thresholdDate,
-    });
-  } catch (error) {
-    console.log("Error in deleteOldJobs:", error.message);
-    return serverErrorResponse(res, "Failed to delete old jobs. Please try again later.");
-  }
-};
+//     return successResponse(res, `${deleteResult.deletedCount} old jobs deleted successfully`, {
+//       deletedJobsCount: deleteResult.deletedCount,
+//       thresholdDate,
+//     });
+//   } catch (error) {
+//     console.log("Error in deleteOldJobs:", error.message);
+//     return serverErrorResponse(res, "Failed to delete old jobs. Please try again later.");
+//   }
+// };
 
 const getOneJob = async (req, res) => {
   try {
@@ -346,4 +346,5 @@ const exportJobsToExcel = async (req, res) => {
   }
 };
 
-export { scrapJobs, deleteOldJobs, getOneJob, deleteJob, getAllJobs, exportJobsToExcel };
+export { scrapJobs, getOneJob, deleteJob, getAllJobs, exportJobsToExcel };
+// export { scrapJobs, deleteOldJobs, getOneJob, deleteJob, getAllJobs, exportJobsToExcel };

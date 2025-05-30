@@ -17,7 +17,7 @@ const scrapJobs = async (req, res) => {
 
     let page = pageNumberRecord.pageNumber;
     page += 1;
-    
+
 
     if (page === 5) {
       page = 0;
@@ -95,13 +95,23 @@ const scrapJobs = async (req, res) => {
     const savedJobs = await jobsModel.insertMany(jobsToSave, { ordered: false }).catch(e => console.log(e));
     savedJobsCount = savedJobs.length;
 
+    const daysThreshold = process.env.JOBS_DELETE_THRESHOLD_DAYS;
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - daysThreshold);
+
+    // Delete jobs older than thresholdDate
+    const deleteResult = await jobsModel.deleteMany({
+      jobPostDate: { $lt: thresholdDate }
+    });
+
     // Return response summary with total count, saved jobs, and skipped jobs
-    return successResponse(res, `${savedJobsCount} jobs fetched and saved successfully.`, {
+    return successResponse(res, `${savedJobsCount} jobs saved successfully and ${jobData.length - savedJobsCount} jobs skipped as they already exist in the database. Old jobs deleted successfully`, {
       totalJobsFetched: jobData.length,
       JobsSavedInDB: savedJobsCount,
       JobsAlreadyExistInDB: jobData.length - savedJobsCount,
+      deletedJobsCount: deleteResult.deletedCount,
+      thresholdDate,
     });
-
 
   } catch (error) {
     console.log("Error Message in Catch BLock:", error.message);

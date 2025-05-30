@@ -1,5 +1,5 @@
 import { successResponse, badRequestResponse, notFoundResponse, serverErrorResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
-import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText } from "../../helpers/cvMatchingHelper/cvMatchingHelpers.js";
+import { analyzeCVAndJobDescription, extractTextFromPDF, summarizeText, summarizeJobText } from "../../helpers/cvMatchingHelper/cvMatchingHelpers.js";
 import usersModel from "../../models/usersModel.js";
 import jobsModel from "../../models/jobListingsModel.js";
 import cvMatchersModel from "../../models/cvMatchersModel.js";
@@ -53,33 +53,62 @@ const userCvMatching = async (req, res) => {
 
         let cvContent = await extractTextFromPDF(req.file.buffer);
 
-        console.log("cvContent: ", cvContent.trim());
+        // console.log("cvContent: ", cvContent.trim());
 
         if (!cvContent.trim()) {
             console.log("cvContent 3: ", cvContent.trim());
             return badRequestResponse(res, "The uploaded CV has no readable content.", null);
         }
 
-        console.log("cvContent: cvContent", cvContent);
+        // console.log("cvContent: cvContent", cvContent);
         let cvWordCount = cvContent.split(/\s+/).length;
 
-        if (cvWordCount > 850) {
-            cvContent = await summarizeText(cvContent, 850);
+        console.log("cvWordCount: ", cvWordCount);
+
+        if (cvWordCount < 100) {
+            return badRequestResponse(res, "The uploaded CV is too short. Please upload a CV with more content.", null);
+        }
+
+        if (cvWordCount > 5000) {
+            return badRequestResponse(res, "The uploaded CV is too long. Please upload a CV with less than 5000 words.", null);
+        }
+
+        if (cvWordCount > 1000) {
+            // console.log("cvContent summarize req");
+            cvContent = await summarizeText(cvContent);
+            // console.log("cvContent summarize res");
+            // console.log("cvContent: cvContent", cvContent);
             cvWordCount = cvContent.split(/\s+/).length;
+            // console.log("cvContent: cvContent", cvWordCount);
         }
 
         let jobDescription = job.description;
         let jobWordCount = jobDescription.split(/\s+/).length;
 
-        if (jobWordCount > 500) {
-            jobDescription = await summarizeText(jobDescription, 500);
-            jobWordCount = jobDescription.split(/\s+/).length;
+
+
+        if (jobWordCount < 15) {
+            return badRequestResponse(res, "The job description is too short. Please provide a more detailed job description.", null);
         }
 
-        console.log("cvContent: cvContent", cvContent);
+        if (jobWordCount > 5000) {
+            return badRequestResponse(res, "The job description is too long. Please provide a job description with less than 5000 words.", null);
+        }
+
+        console.log("jobWordCount 1: ", jobWordCount);
+
+        if (jobWordCount > 1000) {
+            console.log("jobWordCount 2 before summarize: ", jobWordCount);
+            jobDescription = await summarizeJobText(jobDescription);
+            console.log("jobDescription after summarize: ", jobDescription);
+            jobWordCount = jobDescription.split(/\s+/).length;
+            console.log("jobWordCount 2 after summarize: ", jobWordCount);
+        }
+
+        // console.log("cvContent: cvContent", cvContent);
 
         let result = await analyzeCVAndJobDescription(cvContent, jobDescription);
-        console.log("result: ", result);
+        // console.log("result: ", result);
         result = result?.replace(/\*/g, "").replace(/\\n/g, " ").replace(/  +/g, " ").replace(/\\/g, "");
 
         // Check if user already exists in cvMatchers

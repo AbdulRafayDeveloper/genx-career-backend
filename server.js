@@ -17,7 +17,7 @@ const app = express();
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 const corsOptions = {
-  origin: "http://localhost:3000", // Allow all origins
+  origin: "*", // Allow all origins
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Origin",

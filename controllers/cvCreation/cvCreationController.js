@@ -4,7 +4,7 @@ import puppeteer from "puppeteer";
 import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
 import XLSX from "xlsx";
-import cvCreatorsModel from "../../models/cvCreatorsModel.js";
+
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -27,6 +27,7 @@ import {
   experienceToHtml,
   interestsToHtml,
 } from "../../helpers/cvCreationHelper/sectionHelpers.js";
+import usersModel from "../../models/usersModel.js";
 
 import {
   contactToHtml,
@@ -38,6 +39,10 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
+import cvCreatorsModel from "../../models/cvCreatorsModel.js";
+
+import cvTemplatesModel from "../../models/cvTemplatesModel.js";
 
 const generateCV = async (req, res) => {
   try {
@@ -56,6 +61,12 @@ const generateCV = async (req, res) => {
       templateName,
       color,
     } = req.body;
+
+    const { error } = cvSchemaValidation.validate(req.body);
+    if (error) {
+      console.log("Validation Error:", error.details[0].message);
+      return badRequestResponse(res, error.details[0].message);
+    }
 
     const templatePath = path.join(
       __dirname,
@@ -136,6 +147,55 @@ const generateCV = async (req, res) => {
 
     // Get public URL
     const downloadURL = await getDownloadURL(fileRef);
+
+    // Fetch user info (assuming you have usersModel imported)
+    const user = await usersModel.findById(req.user._id);
+    if (!user) {
+      return badRequestResponse(res, "User not found", null);
+    }
+
+    console.log(user);
+
+    // ✅ Get templateId from cvTemplatesModel
+    console.log("Template name: ", templateName);
+    const templateRecord = await cvTemplatesModel.findOne({
+      name: templateName,
+    });
+    if (!templateRecord) {
+      return badRequestResponse(res, "Template not found in database", null);
+    }
+
+    console.log(templateRecord);
+
+    // ✅ Now store in cvCreatorsModel
+    const cvData = {
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      result: [
+        {
+          cvTemplate: downloadURL,
+          templateId: templateRecord._id,
+        },
+      ],
+    };
+
+    const existingRecord = await cvCreatorsModel.findOne({ userId: user._id });
+    console.log(existingRecord);
+
+    if (existingRecord) {
+      // Append new CV to existing record
+      existingRecord.result.push({
+        cvTemplate: downloadURL,
+        templateId: templateRecord._id,
+      });
+      await existingRecord.save();
+    } else {
+      // Create new record
+      await cvCreatorsModel.create(cvData);
+    }
+
+    console.log("CV Creator Data saved successfully.");
 
     successResponse(res, "CV generated successfully", {
       downloadUrl: downloadURL,

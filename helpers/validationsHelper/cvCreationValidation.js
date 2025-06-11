@@ -16,7 +16,7 @@ const cvSchemaValidation = Joi.object({
           "string.empty": "Degree is required.",
           "any.required": "Degree is required.",
         }),
-        institute: Joi.string().required().messages({
+        institution: Joi.string().required().messages({
           "string.empty": "Institute is required.",
           "any.required": "Institute is required.",
         }),

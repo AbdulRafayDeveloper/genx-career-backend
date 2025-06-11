@@ -20,8 +20,8 @@ const cvCreationsSchema = new mongoose.Schema(
 const cvCreatorsSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId, // Use ObjectId for referencing a User
-      ref: "users", // Reference to the Users collection
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
       required: true,
     },
     userName: {

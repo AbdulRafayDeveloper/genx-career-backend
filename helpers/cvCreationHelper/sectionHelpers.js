@@ -91,12 +91,12 @@ export const experienceToHtml = (experiences = []) =>
 
 export const interestsToHtml = (interests = []) =>
   renderOrEmpty(
-    interests,
-    (interests) => `
+    interests.filter((interest) => interest && interest.trim() !== ""),
+    (cleanedInterests) => `
     <h2>Interests</h2>
     <div class="interests">
-      ${interests
-        .map((interest) => `<span>${interest || "Unnamed Interest"}</span>`)
+      ${cleanedInterests
+        .map((interest) => `<span>${interest}</span>`)
         .join(" ")}
     </div>`
   );

@@ -49,6 +49,8 @@ export const uploadCvTemplate = (req, res, next) => {
             const firebasePath = `cvTemplates/${fileName}`;
 
             console.log("→ Uploading to Firebase:", firebasePath);
+            // print the error
+            console.log("err: ", err);
 
             // upload to Firebase
             const fileRef = ref(firebaseStorage, firebasePath);
@@ -70,6 +72,7 @@ export const uploadCvTemplate = (req, res, next) => {
 
             return next();
         } catch (uploadErr) {
+            console.error("Firebase upload error:", uploadErr);
             return serverErrorResponse(res, "Firebase upload failed", uploadErr.message);
         }
     });

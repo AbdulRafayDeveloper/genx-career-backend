@@ -16,6 +16,8 @@ const firebaseConfig = {
   measurementId: process.env.FIREBASE_MEASUREMENT_ID,
 };
 
+console.log("Firebase Config:", firebaseConfig);
+
 // Initialize Firebase with Try-Catch
 let firebaseApp;
 

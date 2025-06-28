@@ -88,6 +88,15 @@ const loginUser = async (req, res) => {
         { expiresIn: "1d" }
       );
 
+      if (!userLoginToken) {
+        return serverErrorResponse(res, "Failed to login user");
+      }
+
+      // check if user is admin
+      if (user.role === "admin") {
+        return successResponse(res, "Admin has logged in successfully", { token: userLoginToken, user: user });
+      }
+
       return successResponse(res, "User has logged in successfully", { token: userLoginToken, user: user });
     } else {
       return notFoundResponse(res, "User credentials are not correct", null);

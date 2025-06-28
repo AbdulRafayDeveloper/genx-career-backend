@@ -1,4 +1,5 @@
 import cvMatchersModel from "../../models/cvMatchersModel.js";
+import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import usersModel from "../../models/usersModel.js";
 import { badRequestResponse, notFoundResponse, serverErrorResponse, successResponse, unauthorizedResponse } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
 import mongoose from "mongoose";
@@ -97,6 +98,12 @@ const deleteUserController = async (req, res) => {
 
     if (!deleteCvMatcher) {
       console.log("No CvMatcher found for this user.");
+    }
+
+    const deleteCvCreator = await cvCreatorsModel.findOneAndDelete({ userId: user._id });
+
+    if (!deleteCvCreator) {
+      console.log("No Cv Creator found for this user.");
     }
 
     return successResponse(res, "User deleted successfully", userDelete);

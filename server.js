@@ -39,6 +39,7 @@ const port = process.env.PORT || 8000;
 // Use all routes
 app.use(routes);
 
+
 // Run the port
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

@@ -14,26 +14,32 @@ const getAllUsersController = async (req, res) => {
     const searchQuery = req.query.search || "";
     let query = { role: "user" };
 
+    // if (searchQuery) {
+    //   query.$or = [
+    //     // { name: { $regex: searchQuery, $options: "i" } },
+    //     { email: { $regex: searchQuery, $options: "i" } },
+    //   ];
+    // }
+
     if (searchQuery) {
       query.$or = [
-        { name: { $regex: searchQuery, $options: "i" } },
         { email: { $regex: searchQuery, $options: "i" } },
       ];
     }
 
     const totalRecords = await Users.countDocuments(query);
 
-    if (!totalRecords) {
-      return notFoundResponse(res, "No users found.", null);
-    }
+    // if (!totalRecords) {
+    //   return successResponse(res, "No users found.", null);
+    // }
 
     const totalPages = Math.ceil(totalRecords / pageSize);
     const skip = (page - 1) * pageSize;
     const users = await Users.find(query).sort({ createdAt: -1 }).skip(skip).limit(pageSize);
 
-    if (!users || users.length === 0) {
-      return notFoundResponse(res, "No users found for the given page.", null);
-    }
+    // if (!users || users.length === 0) {
+    //   return notFoundResponse(res, "No users found for the given page.", null);
+    // }
 
     return successResponse(res, "Users fetched successfully.", {
       records: users, pagination: { totalRecords, totalPages, currentPage: page, pageSize, },
@@ -207,6 +213,11 @@ const userPasswordUpdate = async (req, res) => {
 
     if (!isPasswordMatch) {
       return unauthorizedResponse(res, "Current password is incorrect", null);
+    }
+
+    // check that current and new passwords are not the same
+    if (password === newPassword) {
+      return badRequestResponse(res, "New password must be different from the current password", null);
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);

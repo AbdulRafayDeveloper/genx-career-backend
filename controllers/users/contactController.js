@@ -66,9 +66,9 @@ const getAllContacts = async (req, res) => {
 
     const totalRecords = await contactsModel.countDocuments(query);
 
-    if (!totalRecords) {
-      return notFoundResponse(res, "No contacts found.", null);
-    }
+    // if (!totalRecords) {
+    //   return notFoundResponse(res, "No contacts found.", null);
+    // }
 
     const totalPages = Math.ceil(totalRecords / pageSize);
     const skip = (page - 1) * pageSize;
@@ -77,9 +77,9 @@ const getAllContacts = async (req, res) => {
       .skip(skip)
       .limit(pageSize);
 
-    if (!contacts || contacts.length === 0) {
-      return notFoundResponse(res, "No contacts found for the given page.", null);
-    }
+    // if (!contacts || contacts.length === 0) {
+    //   return notFoundResponse(res, "No contacts found for the given page.", null);
+    // }
 
     return successResponse(res, "Contacts fetched successfully.", {
       records: contacts, pagination: { totalRecords, totalPages, currentPage: page, pageSize, },

@@ -8,16 +8,19 @@ export const projectsToHtml = (projects = []) =>
     <h2>Projects</h2>
     <div class="section-content">
       ${projects
-        .map(
-          (project) => `
-          <div class="project-item">
-            <h3>${project.name || "Unnamed Project"}</h3>
-            <p>Technologies: ${(project.technologies || []).join(", ")}</p>
-            <p><a href='${project.link || "#"}' target='_blank'>${
-            project.link || "No Link Provided"
-          }</a></p>
-          </div>`
-        )
+        .map((project) => {
+          const techs = (project.technologies || []).join(", ");
+          const linkHtml = project.link
+            ? `<p><a href='${project.link}' target='_blank'>${project.link}</a></p>`
+            : "";
+
+          return `
+            <div class="project-item">
+              <h3>${project.name || "Unnamed Project"}</h3>
+              <p>Technologies: ${techs}</p>
+              ${linkHtml}
+            </div>`;
+        })
         .join("")}
     </div>`
   );

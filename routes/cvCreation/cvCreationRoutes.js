@@ -6,7 +6,6 @@ import { verifyAdminToken, verifyUserToken } from "../../middleware/auth/authori
 const router = express.Router();
 
 router.post("/generate", verifyUserToken, generateCV);
-// router.get("/cv-creation/:id", getOneCvCreator);
 router.get("/cv-creation", verifyAdminToken, getAllCvCreators);
 router.delete("/cv-creation/:id", verifyAdminToken, deleteCvCreator);
 router.get("/cv-creation-list/export", verifyAdminToken, exportCvCreatorsToExcel);

@@ -14,13 +14,6 @@ const getAllUsersController = async (req, res) => {
     const searchQuery = req.query.search || "";
     let query = { role: "user" };
 
-    // if (searchQuery) {
-    //   query.$or = [
-    //     // { name: { $regex: searchQuery, $options: "i" } },
-    //     { email: { $regex: searchQuery, $options: "i" } },
-    //   ];
-    // }
-
     if (searchQuery) {
       query.$or = [
         { email: { $regex: searchQuery, $options: "i" } },
@@ -29,17 +22,9 @@ const getAllUsersController = async (req, res) => {
 
     const totalRecords = await Users.countDocuments(query);
 
-    // if (!totalRecords) {
-    //   return successResponse(res, "No users found.", null);
-    // }
-
     const totalPages = Math.ceil(totalRecords / pageSize);
     const skip = (page - 1) * pageSize;
     const users = await Users.find(query).sort({ createdAt: -1 }).skip(skip).limit(pageSize);
-
-    // if (!users || users.length === 0) {
-    //   return notFoundResponse(res, "No users found for the given page.", null);
-    // }
 
     return successResponse(res, "Users fetched successfully.", {
       records: users, pagination: { totalRecords, totalPages, currentPage: page, pageSize, },

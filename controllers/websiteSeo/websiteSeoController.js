@@ -37,21 +37,6 @@ const addWebsiteSeo = async (req, res) => {
     }
 };
 
-// const getAllWebsiteSeo = async (req, res) => {
-//     try {
-//         const seoEntries = await WebsiteSeo.find().sort({ createdAt: -1 });
-
-//         if (!seoEntries || seoEntries.length === 0) {
-//             return successResponse(res, "No website SEO entries found.", seoEntries);
-//         }
-
-//         return successResponse(res, "Website SEO entries retrieved successfully.", seoEntries);
-//     } catch (error) {
-//         console.log("Error in getAllWebsiteSeo:", error);
-//         return serverErrorResponse(res, "An unexpected issue occurred.");
-//     }
-// };
-
 const getWebsiteSeoByPageName = async (req, res) => {
     try {
         const { pageName } = req.query;
@@ -72,31 +57,6 @@ const getWebsiteSeoByPageName = async (req, res) => {
         return serverErrorResponse(res, "An unexpected issue occurred.");
     }
 };
-
-// const getOneWebsiteSeo = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         if (!id) {
-//             return badRequestResponse(res, "SEO ID is required.");
-//         }
-
-//         if (!mongoose.Types.ObjectId.isValid(id)) {
-//             return badRequestResponse(res, "Invalid SEO ID format.");
-//         }
-
-//         const seoEntry = await WebsiteSeo.findById(id);
-
-//         if (!seoEntry) {
-//             return notFoundResponse(res, "SEO entry not found.");
-//         }
-
-//         return successResponse(res, "Website SEO entry retrieved successfully.", seoEntry);
-//     } catch (error) {
-//         console.log("Error in getOneWebsiteSeo:", error);
-//         return serverErrorResponse(res, "An unexpected issue occurred.");
-//     }
-// };
 
 const updateWebsiteSeo = async (req, res) => {
     try {

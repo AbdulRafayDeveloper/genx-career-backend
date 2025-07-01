@@ -80,10 +80,6 @@ const getAllCvTemplates = async (req, res) => {
     const skip = (page - 1) * limit;
     const records = await CvTemplate.find(query).skip(skip).limit(limit);
 
-    // if (!records.length) {
-    //   return notFoundResponse(res, "No templates found", null);
-    // }
-
     return successResponse(res, "Templates fetched successfully", {
       records,
       pagination: { totalRecords, totalPages, currentPage: page, pageSize: limit },

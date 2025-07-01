@@ -1,6 +1,5 @@
 import express from "express";
 import { generateCV, getAllCvCreators, deleteCvCreator, exportCvCreatorsToExcel } from "../../controllers/cvCreation/cvCreationController.js";
-// import { generateCV, getAllCvCreators, getOneCvCreator, deleteCvCreator, exportCvCreatorsToExcel } from "../../controllers/cvCreation/cvCreationController.js";
 import { verifyAdminToken, verifyUserToken } from "../../middleware/auth/authorizeUser.js";
 
 const router = express.Router();

@@ -156,7 +156,7 @@ const generateCV = async (req, res) => {
 
     console.log(user);
 
-    // ✅ Get templateId from cvTemplatesModel
+    // Get templateId from cvTemplatesModel
     console.log("Template name: ", templateName);
     const templateRecord = await cvTemplatesModel.findOne({
       name: templateName,
@@ -167,7 +167,7 @@ const generateCV = async (req, res) => {
 
     console.log(templateRecord);
 
-    // ✅ Now store in cvCreatorsModel
+    // Now store in cvCreatorsModel
     const cvData = {
       userId: user._id,
       userName: user.name,

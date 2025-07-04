@@ -103,6 +103,9 @@ const generateCV = async (req, res) => {
       color,
     };
 
+    console.log("Experience data:", experience);
+
+
     const renderedHtml = renderTemplate(template, data);
 
     const browser = await puppeteer.launch({ headless: "new" });

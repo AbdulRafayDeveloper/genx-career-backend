@@ -34,8 +34,7 @@ export const certificatesToHtml = (certificates = []) =>
       ${certificates
         .map(
           (cert) =>
-            `<p>${cert.name || "Unnamed Certificate"} (${
-              cert.date || "No Date Provided"
+            `<p>${cert.name || "Unnamed Certificate"} (${cert.date || "No Date Provided"
             })</p>`
         )
         .join("")}
@@ -84,8 +83,9 @@ export const experienceToHtml = (experiences = []) =>
         .map(
           (exp) => `
           <div class="experience-item">
-            <h3>${exp.title || "Unnamed Position"}</h3>
-            <p>${exp.description || "No Description Provided"}</p>
+            <h3 style="margin: 4px 0;">${exp.company}</h3>
+            <h5 style="margin: 2px 0;">${exp.title || "Position Not Mention"}</h5>
+            <p style="margin: 2px 0;">${exp.description || "No Description Provided"}</p>
           </div>`
         )
         .join("")}

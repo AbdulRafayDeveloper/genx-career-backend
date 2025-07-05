@@ -214,7 +214,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-import pdf from "html-pdf-node";
+import pdf from "html-pdf";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -268,13 +268,23 @@ const generateCV = async (req, res) => {
 
     const { error } = cvSchemaValidation.validate(req.body);
     if (error) {
+      console.log("Validation Error:", error.details[0].message);
       return badRequestResponse(res, error.details[0].message);
     }
 
-    const templatePath = path.join(__dirname, "../../templates", `${templateName}.html`);
+    const templatePath = path.join(
+      __dirname,
+      "../../templates",
+      `${templateName}.html`
+    );
+
     if (!fs.existsSync(templatePath)) {
-      return badRequestResponse(res, "Template not found. Please provide a valid template name.");
+      return badRequestResponse(
+        res,
+        "Template not found. Please provide a valid template name."
+      );
     }
+
     const template = fs.readFileSync(templatePath, "utf-8");
 
     const data = {
@@ -287,15 +297,30 @@ const generateCV = async (req, res) => {
       languages: languagesToHtml(languages),
       interests: interestsToHtml(interests),
       certificates: certificatesToHtml(certificates),
-      contact: templateName === "template2" ? contactToHtml2(contact) : contactToHtml(contact),
+      contact:
+        templateName === "template2"
+          ? contactToHtml2(contact)
+          : contactToHtml(contact),
       imageUrl,
       color,
     };
 
     const renderedHtml = renderTemplate(template, data);
 
-    const file = { content: renderedHtml };
-    const pdfBuffer = await pdf.generatePdf(file, { format: "A4" });
+    // ✅ Convert HTML to PDF using html-pdf
+    const pdfBuffer = await new Promise((resolve, reject) => {
+      pdf
+        .create(renderedHtml, {
+          format: "A4",
+          border: "0px",
+          type: "pdf",
+          quality: "100",
+        })
+        .toBuffer((err, buffer) => {
+          if (err) return reject(err);
+          resolve(buffer);
+        });
+    });
 
     const uniqueId = uuidv4();
     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
@@ -303,9 +328,11 @@ const generateCV = async (req, res) => {
     const firebasePath = `cv-collection/${fileName}`;
     const fileRef = ref(firebaseStorage, firebasePath);
 
-    await uploadBytes(fileRef, pdfBuffer, { contentType: "application/pdf" });
-    const metadata = await getMetadata(fileRef);
+    await uploadBytes(fileRef, pdfBuffer, {
+      contentType: "application/pdf",
+    });
 
+    const metadata = await getMetadata(fileRef);
     if (!metadata) {
       return serverErrorResponse(res, "Failed to upload metadata");
     }
@@ -317,7 +344,9 @@ const generateCV = async (req, res) => {
       return badRequestResponse(res, "User not found");
     }
 
-    const templateRecord = await cvTemplatesModel.findOne({ name: templateName });
+    const templateRecord = await cvTemplatesModel.findOne({
+      name: templateName,
+    });
     if (!templateRecord) {
       return badRequestResponse(res, "Template not found in database");
     }
@@ -347,7 +376,6 @@ const generateCV = async (req, res) => {
       downloadUrl: downloadURL,
       fileName: fileName,
     });
-
   } catch (error) {
     console.log("Error generating CV:", error);
     serverErrorResponse(res, "Failed to generate CV. Please try again later.");

@@ -209,13 +209,11 @@
 //     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
 //   }
 // };
+
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-import React from "react";
-import ReactPDF from "@react-pdf/renderer";
-import toBuffer from "stream-to-buffer";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -236,15 +234,16 @@ import {
   experienceToHtml,
   interestsToHtml,
 } from "../../helpers/cvCreationHelper/sectionHelpers.js";
-import usersModel from "../../models/usersModel.js";
 import {
   contactToHtml,
   contactToHtml2,
 } from "../../helpers/cvCreationHelper/contactHelper.js";
+import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import cvTemplatesModel from "../../models/cvTemplatesModel.js";
-import MyDocument from "./MyDocument.js";
+import usersModel from "../../models/usersModel.js";
+import { convertHtmlToPdfBuffer } from "../../helpers/cvCreationHelper/pdfshiftHelper.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -262,78 +261,86 @@ const generateCV = async (req, res) => {
       interests,
       certificates,
       contact,
+      imageUrl,
       templateName,
+      color,
     } = req.body;
 
     const { error } = cvSchemaValidation.validate(req.body);
     if (error) {
+      console.log("Validation Error:", error.details[0].message);
       return badRequestResponse(res, error.details[0].message);
     }
 
+    const templatePath = path.join(
+      __dirname,
+      "../../templates",
+      `${templateName}.html`
+    );
+
+    if (!fs.existsSync(templatePath)) {
+      return badRequestResponse(
+        res,
+        "Template not found. Please provide a valid template name.",
+        null
+      );
+    }
+
+    const template = fs.readFileSync(templatePath, "utf-8");
+
+    const data = {
+      name,
+      summary,
+      education: educationToHtml(education),
+      experience: experienceToHtml(experience),
+      skills: skills.map((skill) => `<span>${skill}</span>`).join(" "),
+      projects: projectsToHtml(projects),
+      languages: languagesToHtml(languages),
+      interests: interestsToHtml(interests),
+      certificates: certificatesToHtml(certificates),
+      contact:
+        templateName === "template2"
+          ? contactToHtml2(contact)
+          : contactToHtml(contact),
+      imageUrl,
+      color,
+    };
+
+    const renderedHtml = renderTemplate(template, data);
+
+    // ✅ Convert HTML to PDF using PDFShift
+    const pdfBuffer = await convertHtmlToPdfBuffer(renderedHtml);
+
+    const uniqueId = uuidv4();
+    const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
+    const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
+
+    const firebasePath = `cv-collection/${fileName}`;
+    const fileRef = ref(firebaseStorage, firebasePath);
+
+    // Upload to Firebase
+    await uploadBytes(fileRef, pdfBuffer, {
+      contentType: "application/pdf",
+    });
+
+    // Get public URL
+    const downloadURL = await getDownloadURL(fileRef);
+
+    // Fetch user
     const user = await usersModel.findById(req.user._id);
     if (!user) {
-      return badRequestResponse(res, "User not found");
+      return badRequestResponse(res, "User not found", null);
     }
 
     const templateRecord = await cvTemplatesModel.findOne({
       name: templateName,
     });
     if (!templateRecord) {
-      return badRequestResponse(res, "Template not found in database");
+      return badRequestResponse(res, "Template not found in database", null);
     }
-
-    const educationStr = educationToHtml(education);
-    const experienceStr = experienceToHtml(experience);
-    const skillsStr = skills.join(", ");
-    const projectsStr = projectsToHtml(projects);
-    const languagesStr = languagesToHtml(languages);
-    const interestsStr = interestsToHtml(interests);
-    const certificatesStr = certificatesToHtml(certificates);
-    const contactStr = templateName === "template2" ? contactToHtml2(contact) : contactToHtml(contact);
-
-    // Create React element
-    const doc = React.createElement(MyDocument, {
-      name,
-      summary,
-      education: educationStr,
-      experience: experienceStr,
-      skills: skillsStr,
-      projects: projectsStr,
-      languages: languagesStr,
-      interests: interestsStr,
-      certificates: certificatesStr,
-      contact: contactStr,
-    });
-
-    // Render to stream
-    const pdfStream = await ReactPDF.renderToStream(doc);
-
-    // Convert stream to buffer
-    const pdfBuffer = await new Promise((resolve, reject) => {
-      toBuffer(pdfStream, (err, buffer) => {
-        if (err) reject(err);
-        else resolve(buffer);
-      });
-    });
-
-    const uniqueId = uuidv4();
-    const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
-    const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
-    const firebasePath = `cv-collection/${fileName}`;
-    const fileRef = ref(firebaseStorage, firebasePath);
-
-    await uploadBytes(fileRef, pdfBuffer, {
-      contentType: "application/pdf",
-    });
-
-    const metadata = await getMetadata(fileRef);
-    if (!metadata) {
-      return serverErrorResponse(res, "Failed to upload metadata");
-    }
-
-    const downloadURL = await getDownloadURL(fileRef);
 
     const existingRecord = await cvCreatorsModel.findOne({ userId: user._id });
+
     if (existingRecord) {
       existingRecord.result.push({
         cvTemplate: downloadURL,
@@ -363,6 +370,190 @@ const generateCV = async (req, res) => {
     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// second way that works on live but cannnot render html to pdf
+
+// import fs from "fs";
+// import path from "path";
+// import { v4 as uuidv4 } from "uuid";
+// import { fileURLToPath } from "url";
+// import React from "react";
+// import ReactPDF from "@react-pdf/renderer";
+// import toBuffer from "stream-to-buffer";
+// import { firebaseStorage } from "../../config/firebaseConfig.js";
+// import {
+//   ref,
+//   uploadBytes,
+//   getDownloadURL,
+//   getMetadata,
+// } from "firebase/storage";
+// import {
+//   successResponse,
+//   badRequestResponse,
+//   serverErrorResponse,
+// } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
+// import {
+//   projectsToHtml,
+//   certificatesToHtml,
+//   languagesToHtml,
+//   educationToHtml,
+//   experienceToHtml,
+//   interestsToHtml,
+// } from "../../helpers/cvCreationHelper/sectionHelpers.js";
+// import usersModel from "../../models/usersModel.js";
+// import {
+//   contactToHtml,
+//   contactToHtml2,
+// } from "../../helpers/cvCreationHelper/contactHelper.js";
+// import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
+// import cvCreatorsModel from "../../models/cvCreatorsModel.js";
+// import cvTemplatesModel from "../../models/cvTemplatesModel.js";
+// import MyDocument from "./MyDocument.js";
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
+// const generateCV = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       summary,
+//       education,
+//       experience,
+//       skills = [],
+//       projects,
+//       languages,
+//       interests,
+//       certificates,
+//       contact,
+//       templateName,
+//     } = req.body;
+
+//     const { error } = cvSchemaValidation.validate(req.body);
+//     if (error) {
+//       return badRequestResponse(res, error.details[0].message);
+//     }
+
+//     const user = await usersModel.findById(req.user._id);
+//     if (!user) {
+//       return badRequestResponse(res, "User not found");
+//     }
+
+//     const templateRecord = await cvTemplatesModel.findOne({
+//       name: templateName,
+//     });
+//     if (!templateRecord) {
+//       return badRequestResponse(res, "Template not found in database");
+//     }
+
+//     const educationStr = educationToHtml(education);
+//     const experienceStr = experienceToHtml(experience);
+//     const skillsStr = skills.join(", ");
+//     const projectsStr = projectsToHtml(projects);
+//     const languagesStr = languagesToHtml(languages);
+//     const interestsStr = interestsToHtml(interests);
+//     const certificatesStr = certificatesToHtml(certificates);
+//     const contactStr = templateName === "template2" ? contactToHtml2(contact) : contactToHtml(contact);
+
+//     // Create React element
+//     const doc = React.createElement(MyDocument, {
+//       name,
+//       summary,
+//       education: educationStr,
+//       experience: experienceStr,
+//       skills: skillsStr,
+//       projects: projectsStr,
+//       languages: languagesStr,
+//       interests: interestsStr,
+//       certificates: certificatesStr,
+//       contact: contactStr,
+//     });
+
+//     // Render to stream
+//     const pdfStream = await ReactPDF.renderToStream(doc);
+
+//     // Convert stream to buffer
+//     const pdfBuffer = await new Promise((resolve, reject) => {
+//       toBuffer(pdfStream, (err, buffer) => {
+//         if (err) reject(err);
+//         else resolve(buffer);
+//       });
+//     });
+
+//     const uniqueId = uuidv4();
+//     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
+//     const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
+//     const firebasePath = `cv-collection/${fileName}`;
+//     const fileRef = ref(firebaseStorage, firebasePath);
+
+//     await uploadBytes(fileRef, pdfBuffer, {
+//       contentType: "application/pdf",
+//     });
+
+//     const metadata = await getMetadata(fileRef);
+//     if (!metadata) {
+//       return serverErrorResponse(res, "Failed to upload metadata");
+//     }
+
+//     const downloadURL = await getDownloadURL(fileRef);
+
+//     const existingRecord = await cvCreatorsModel.findOne({ userId: user._id });
+//     if (existingRecord) {
+//       existingRecord.result.push({
+//         cvTemplate: downloadURL,
+//         templateId: templateRecord._id,
+//       });
+//       await existingRecord.save();
+//     } else {
+//       await cvCreatorsModel.create({
+//         userId: user._id,
+//         userName: user.name,
+//         userEmail: user.email,
+//         result: [
+//           {
+//             cvTemplate: downloadURL,
+//             templateId: templateRecord._id,
+//           },
+//         ],
+//       });
+//     }
+
+//     successResponse(res, "CV generated successfully", {
+//       downloadUrl: downloadURL,
+//       fileName: fileName,
+//     });
+//   } catch (error) {
+//     console.log("Error generating CV:", error);
+//     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
+//   }
+// };
 
 const getOneCvCreator = async (req, res) => {
   try {

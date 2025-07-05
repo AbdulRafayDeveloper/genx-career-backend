@@ -213,10 +213,9 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import mongoose from "mongoose";
-import XLSX from "xlsx";
 import { fileURLToPath } from "url";
 
+import puppeteer from "puppeteer";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -230,7 +229,6 @@ import {
   badRequestResponse,
   serverErrorResponse,
 } from "../../helpers/responsesHelper/apiResponsesHelpers.js";
-
 import {
   projectsToHtml,
   certificatesToHtml,
@@ -248,10 +246,6 @@ import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import cvTemplatesModel from "../../models/cvTemplatesModel.js";
-
-import chromium from "chrome-aws-lambda";
-import puppeteerCore from "puppeteer-core";
-import puppeteerLocal from "puppeteer"; // for local
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -274,21 +268,18 @@ const generateCV = async (req, res) => {
       color,
     } = req.body;
 
-    // ✅ Validate
     const { error } = cvSchemaValidation.validate(req.body);
     if (error) {
       console.log("Validation Error:", error.details[0].message);
       return badRequestResponse(res, error.details[0].message);
     }
 
-    // ✅ Template path
     const templatePath = path.join(__dirname, "../../templates", `${templateName}.html`);
     if (!fs.existsSync(templatePath)) {
       return badRequestResponse(res, "Template not found. Please provide a valid template name.");
     }
     const template = fs.readFileSync(templatePath, "utf-8");
 
-    // ✅ Prepare HTML data
     const data = {
       name,
       summary,
@@ -306,25 +297,10 @@ const generateCV = async (req, res) => {
 
     const renderedHtml = renderTemplate(template, data);
 
-    // ✅ Detect local or vercel
-    const isLocal = !process.env.VERCEL;
-    let browser;
-
-    if (isLocal) {
-      console.log("Running locally: using puppeteer");
-      browser = await puppeteerLocal.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
-    } else {
-      console.log("Running on Vercel: using chrome-aws-lambda");
-      browser = await puppeteerCore.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath,
-        headless: chromium.headless,
-      });
-    }
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
 
     const page = await browser.newPage();
     await page.setContent(renderedHtml, { waitUntil: "networkidle0" });
@@ -337,7 +313,6 @@ const generateCV = async (req, res) => {
 
     await browser.close();
 
-    // ✅ Upload to Firebase
     const uniqueId = uuidv4();
     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
     const fileName = `${sanitizedName}_${uniqueId}_cv.pdf`;
@@ -346,14 +321,11 @@ const generateCV = async (req, res) => {
 
     await uploadBytes(fileRef, pdfBuffer, { contentType: "application/pdf" });
     const metadata = await getMetadata(fileRef);
-
     if (!metadata) {
       return serverErrorResponse(res, "Failed to upload metadata");
     }
-
     const downloadURL = await getDownloadURL(fileRef);
 
-    // ✅ Save CV
     const user = await usersModel.findById(req.user._id);
     if (!user) {
       return badRequestResponse(res, "User not found");
@@ -395,6 +367,9 @@ const generateCV = async (req, res) => {
     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
   }
 };
+
+export default generateCV;
+
 
 const getOneCvCreator = async (req, res) => {
   try {

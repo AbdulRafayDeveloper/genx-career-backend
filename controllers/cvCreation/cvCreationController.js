@@ -214,8 +214,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-import chromium from "chrome-aws-lambda";
-import puppeteer from "puppeteer-core";
+import pdf from "html-pdf-node";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -269,13 +268,12 @@ const generateCV = async (req, res) => {
 
     const { error } = cvSchemaValidation.validate(req.body);
     if (error) {
-      console.log("Validation Error:", error.details[0].message);
       return badRequestResponse(res, error.details[0].message);
     }
 
     const templatePath = path.join(__dirname, "../../templates", `${templateName}.html`);
     if (!fs.existsSync(templatePath)) {
-      return badRequestResponse(res, "Template not found");
+      return badRequestResponse(res, "Template not found. Please provide a valid template name.");
     }
     const template = fs.readFileSync(templatePath, "utf-8");
 
@@ -296,34 +294,8 @@ const generateCV = async (req, res) => {
 
     const renderedHtml = renderTemplate(template, data);
 
-    const isLocal = !process.env.VERCEL;
-
-    let browser;
-    if (isLocal) {
-      const puppeteerLocal = await import("puppeteer");
-      browser = await puppeteerLocal.default.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
-    } else {
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath,
-        headless: chromium.headless,
-      });
-    }
-
-    const page = await browser.newPage();
-    await page.setContent(renderedHtml, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0px", right: "0px", bottom: "0px", left: "0px" },
-    });
-
-    await browser.close();
+    const file = { content: renderedHtml };
+    const pdfBuffer = await pdf.generatePdf(file, { format: "A4" });
 
     const uniqueId = uuidv4();
     const sanitizedName = name.replace(/\s+/g, "_").toLowerCase();
@@ -377,11 +349,7 @@ const generateCV = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("Error generating CV:", {
-      message: error.message,
-      stack: error.stack,
-      ...error,
-    });
+    console.log("Error generating CV:", error);
     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
   }
 };

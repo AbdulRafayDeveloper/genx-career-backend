@@ -214,7 +214,8 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-
+import chromium from "chrome-aws-lambda";
+import puppeteer from "puppeteer-core";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -222,7 +223,6 @@ import {
   getDownloadURL,
   getMetadata,
 } from "firebase/storage";
-
 import {
   successResponse,
   badRequestResponse,
@@ -245,9 +245,6 @@ import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import cvTemplatesModel from "../../models/cvTemplatesModel.js";
-
-import chromium from "chrome-aws-lambda";
-import puppeteer from "puppeteer-core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -278,7 +275,7 @@ const generateCV = async (req, res) => {
 
     const templatePath = path.join(__dirname, "../../templates", `${templateName}.html`);
     if (!fs.existsSync(templatePath)) {
-      return badRequestResponse(res, "Template not found. Please provide a valid template name.");
+      return badRequestResponse(res, "Template not found");
     }
     const template = fs.readFileSync(templatePath, "utf-8");
 
@@ -299,15 +296,23 @@ const generateCV = async (req, res) => {
 
     const renderedHtml = renderTemplate(template, data);
 
-    // Hybrid: Detect local or Vercel
-    const executablePath = await chromium.executablePath;
+    const isLocal = !process.env.VERCEL;
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: executablePath || undefined,
-      headless: chromium.headless,
-    });
+    let browser;
+    if (isLocal) {
+      const puppeteerLocal = await import("puppeteer");
+      browser = await puppeteerLocal.default.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+    } else {
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath,
+        headless: chromium.headless,
+      });
+    }
 
     const page = await browser.newPage();
     await page.setContent(renderedHtml, { waitUntil: "networkidle0" });
@@ -328,9 +333,11 @@ const generateCV = async (req, res) => {
 
     await uploadBytes(fileRef, pdfBuffer, { contentType: "application/pdf" });
     const metadata = await getMetadata(fileRef);
+
     if (!metadata) {
       return serverErrorResponse(res, "Failed to upload metadata");
     }
+
     const downloadURL = await getDownloadURL(fileRef);
 
     const user = await usersModel.findById(req.user._id);
@@ -370,7 +377,11 @@ const generateCV = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("Error generating CV:", error);
+    console.log("Error generating CV:", {
+      message: error.message,
+      stack: error.stack,
+      ...error,
+    });
     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
   }
 };

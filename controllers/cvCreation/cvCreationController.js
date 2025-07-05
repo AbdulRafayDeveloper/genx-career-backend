@@ -209,12 +209,13 @@
 //     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
 //   }
 // };
-
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
-import pdf from "html-pdf";
+import React from "react";
+import ReactPDF from "@react-pdf/renderer";
+import toBuffer from "stream-to-buffer";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -240,10 +241,10 @@ import {
   contactToHtml,
   contactToHtml2,
 } from "../../helpers/cvCreationHelper/contactHelper.js";
-import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import cvTemplatesModel from "../../models/cvTemplatesModel.js";
+import MyDocument from "./MyDocument.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -261,65 +262,58 @@ const generateCV = async (req, res) => {
       interests,
       certificates,
       contact,
-      imageUrl,
       templateName,
-      color,
     } = req.body;
 
     const { error } = cvSchemaValidation.validate(req.body);
     if (error) {
-      console.log("Validation Error:", error.details[0].message);
       return badRequestResponse(res, error.details[0].message);
     }
 
-    const templatePath = path.join(
-      __dirname,
-      "../../templates",
-      `${templateName}.html`
-    );
-
-    if (!fs.existsSync(templatePath)) {
-      return badRequestResponse(
-        res,
-        "Template not found. Please provide a valid template name."
-      );
+    const user = await usersModel.findById(req.user._id);
+    if (!user) {
+      return badRequestResponse(res, "User not found");
     }
 
-    const template = fs.readFileSync(templatePath, "utf-8");
+    const templateRecord = await cvTemplatesModel.findOne({
+      name: templateName,
+    });
+    if (!templateRecord) {
+      return badRequestResponse(res, "Template not found in database");
+    }
 
-    const data = {
+    const educationStr = educationToHtml(education);
+    const experienceStr = experienceToHtml(experience);
+    const skillsStr = skills.join(", ");
+    const projectsStr = projectsToHtml(projects);
+    const languagesStr = languagesToHtml(languages);
+    const interestsStr = interestsToHtml(interests);
+    const certificatesStr = certificatesToHtml(certificates);
+    const contactStr = templateName === "template2" ? contactToHtml2(contact) : contactToHtml(contact);
+
+    // Create React element
+    const doc = React.createElement(MyDocument, {
       name,
       summary,
-      education: educationToHtml(education),
-      experience: experienceToHtml(experience),
-      skills: skills.map((skill) => `<span>${skill}</span>`).join(" "),
-      projects: projectsToHtml(projects),
-      languages: languagesToHtml(languages),
-      interests: interestsToHtml(interests),
-      certificates: certificatesToHtml(certificates),
-      contact:
-        templateName === "template2"
-          ? contactToHtml2(contact)
-          : contactToHtml(contact),
-      imageUrl,
-      color,
-    };
+      education: educationStr,
+      experience: experienceStr,
+      skills: skillsStr,
+      projects: projectsStr,
+      languages: languagesStr,
+      interests: interestsStr,
+      certificates: certificatesStr,
+      contact: contactStr,
+    });
 
-    const renderedHtml = renderTemplate(template, data);
+    // Render to stream
+    const pdfStream = await ReactPDF.renderToStream(doc);
 
-    // ✅ Convert HTML to PDF using html-pdf
+    // Convert stream to buffer
     const pdfBuffer = await new Promise((resolve, reject) => {
-      pdf
-        .create(renderedHtml, {
-          format: "A4",
-          border: "0px",
-          type: "pdf",
-          quality: "100",
-        })
-        .toBuffer((err, buffer) => {
-          if (err) return reject(err);
-          resolve(buffer);
-        });
+      toBuffer(pdfStream, (err, buffer) => {
+        if (err) reject(err);
+        else resolve(buffer);
+      });
     });
 
     const uniqueId = uuidv4();
@@ -338,18 +332,6 @@ const generateCV = async (req, res) => {
     }
 
     const downloadURL = await getDownloadURL(fileRef);
-
-    const user = await usersModel.findById(req.user._id);
-    if (!user) {
-      return badRequestResponse(res, "User not found");
-    }
-
-    const templateRecord = await cvTemplatesModel.findOne({
-      name: templateName,
-    });
-    if (!templateRecord) {
-      return badRequestResponse(res, "Template not found in database");
-    }
 
     const existingRecord = await cvCreatorsModel.findOne({ userId: user._id });
     if (existingRecord) {

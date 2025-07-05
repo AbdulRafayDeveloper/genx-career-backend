@@ -215,7 +215,6 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 
-import puppeteer from "puppeteer";
 import { firebaseStorage } from "../../config/firebaseConfig.js";
 import {
   ref,
@@ -246,6 +245,9 @@ import { renderTemplate } from "../../helpers/cvCreationHelper/renderHelper.js";
 import cvSchemaValidation from "../../helpers/validationsHelper/cvCreationValidation.js";
 import cvCreatorsModel from "../../models/cvCreatorsModel.js";
 import cvTemplatesModel from "../../models/cvTemplatesModel.js";
+
+import chromium from "chrome-aws-lambda";
+import puppeteer from "puppeteer-core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -297,9 +299,14 @@ const generateCV = async (req, res) => {
 
     const renderedHtml = renderTemplate(template, data);
 
+    // Hybrid: Detect local or Vercel
+    const executablePath = await chromium.executablePath;
+
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: executablePath || undefined,
+      headless: chromium.headless,
     });
 
     const page = await browser.newPage();
@@ -367,9 +374,6 @@ const generateCV = async (req, res) => {
     serverErrorResponse(res, "Failed to generate CV. Please try again later.");
   }
 };
-
-export default generateCV;
-
 
 const getOneCvCreator = async (req, res) => {
   try {

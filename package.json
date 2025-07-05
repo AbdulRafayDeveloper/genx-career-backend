@@ -14,6 +14,7 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "chrome-aws-lambda": "^10.1.0",
     "cors": "^2.8.5",
     "csv-stringify": "^6.5.2",
     "dotenv": "^16.4.5",
@@ -31,7 +32,8 @@
     "path": "^0.12.7",
     "pdf-parse": "^1.1.1",
     "pdf.js-extract": "^0.2.1",
-    "puppeteer": "^24.6.1",
+    "puppeteer": "^24.11.2",
+    "puppeteer-core": "^10.4.0",
     "require": "^2.4.20",
     "textract": "^2.5.0",
     "url": "^0.11.4",

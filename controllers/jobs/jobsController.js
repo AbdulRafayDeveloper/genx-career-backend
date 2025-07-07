@@ -119,27 +119,6 @@ const scrapJobs = async (req, res) => {
   }
 };
 
-// const deleteOldJobs = async (req, res) => {
-//   try {
-//     const daysThreshold = process.env.JOBS_DELETE_THRESHOLD_DAYS;
-//     const thresholdDate = new Date();
-//     thresholdDate.setDate(thresholdDate.getDate() - daysThreshold);
-
-//     // Delete jobs older than thresholdDate
-//     const deleteResult = await jobsModel.deleteMany({
-//       jobPostDate: { $lt: thresholdDate }
-//     });
-
-//     return successResponse(res, `${deleteResult.deletedCount} old jobs deleted successfully`, {
-//       deletedJobsCount: deleteResult.deletedCount,
-//       thresholdDate,
-//     });
-//   } catch (error) {
-//     console.log("Error in deleteOldJobs:", error.message);
-//     return serverErrorResponse(res, "Failed to delete old jobs. Please try again later.");
-//   }
-// };
-
 const getOneJob = async (req, res) => {
   try {
     const id = req.params.id;
@@ -165,77 +144,158 @@ const getOneJob = async (req, res) => {
   }
 };
 
+// const getAllJobs = async (req, res) => {
+//   try {
+//     const { pageNumber = 1, pageSize = 15, search = '', location = '', remote = '', datePosted = 'anytime', minSalary, maxSalary } = req.query;
+//     const filters = {};
+
+//     // Search filter
+//     if (search) {
+//       filters.title = { $regex: search, $options: 'i' };
+//     }
+
+//     // Location filter (exact match)
+//     if (location) {
+//       filters.location = { $regex: location, $options: 'i' };
+//     }
+
+//     console.log("location: ", location);
+
+//     console.log("remote: ", remote);
+
+//     // Remote filter (exact match)
+//     if (remote === 'true') {
+//       filters.remote = true;
+//     }
+
+//     console.log("datePosted: ", datePosted);
+
+//     // Date posted filter (custom logic for last X days, weeks, months, etc.)
+//     if (datePosted !== 'anytime') {
+//       const dateFilter = getDateFilter(datePosted);
+//       console.log("dateFilter: ", dateFilter);
+//       if (dateFilter) {
+//         filters.jobPostDate = { $gte: dateFilter };
+//       }
+//     }
+
+//     if (minSalary || maxSalary) {
+//       // Parse values in base 10
+//       const min = parseInt(minSalary, 10);
+//       const max = parseInt(maxSalary, 10);
+//       const salaryFilter = {};
+
+//       // Only add the filter if the parsed number is valid (i.e. not NaN)
+//       if (!isNaN(min)) {
+//         salaryFilter.$gte = min;
+//       }
+//       if (!isNaN(max)) {
+//         salaryFilter.$lte = max;
+//       }
+//       // Only add the salary filter if at least one of the values is valid.
+//       if (Object.keys(salaryFilter).length > 0) {
+//         filters.minAnnualSalary = salaryFilter;
+//       }
+//     }
+
+//     // Pagination logic
+//     const skip = (pageNumber - 1) * pageSize;
+//     const limit = parseInt(pageSize);
+
+//     // Fetch jobs with the provided filters and pagination
+//     const getAllJobs = await jobsModel.find(filters).skip(skip).limit(limit);
+//     const totalJobsCount = await jobsModel.countDocuments(filters);
+
+//     console.log("getAllJobs: ", getAllJobs);
+
+//     return successResponse(res, 'Jobs fetched successfully.', {
+//       getAllJobs,
+//       totalJobsCount,
+//       pageNumber: parseInt(pageNumber),
+//       pageSize: limit,
+//     });
+
+//   } catch (error) {
+//     console.log("Error Message in Catch BLock:", error.message);
+//     return serverErrorResponse(res, 'Internal server error. Please try again later');
+//   }
+// };
+
 const getAllJobs = async (req, res) => {
   try {
-    const { pageNumber = 1, pageSize = 15, search = '', location = '', remote = '', datePosted = 'anytime', minSalary, maxSalary } = req.query;
+    const {
+      pageNumber = 1,
+      pageSize = 15,
+      search = '',
+      location = '',
+      remote = '',
+      datePosted = 'anytime',
+      minSalary,
+      maxSalary,
+    } = req.query;
+
     const filters = {};
 
-    // Search filter
-    if (search) {
-      filters.title = { $regex: search, $options: 'i' };
+    // Search by title (case-insensitive partial)
+    if (search.trim()) {
+      filters.title = { $regex: search.trim(), $options: 'i' };
     }
 
-    // Location filter (exact match)
-    if (location) {
-      filters.location = location;
+    // Location (case-insensitive partial)
+    if (location && location.trim()) {
+      filters.location = { $regex: location.trim(), $options: 'i' };
     }
 
-    console.log("remote: ", remote);
+    console.log("location: ", location);
 
-    // Remote filter (exact match)
+    // Remote (exact match)
     if (remote === 'true') {
       filters.remote = true;
+    } else if (remote === 'false') {
+      filters.remote = false;
     }
 
-    console.log("datePosted: ", datePosted);
-
-    // Date posted filter (custom logic for last X days, weeks, months, etc.)
+    // Date posted
     if (datePosted !== 'anytime') {
       const dateFilter = getDateFilter(datePosted);
-      console.log("dateFilter: ", dateFilter);
       if (dateFilter) {
         filters.jobPostDate = { $gte: dateFilter };
       }
     }
 
-    if (minSalary || maxSalary) {
-      // Parse values in base 10
-      const min = parseInt(minSalary, 10);
-      const max = parseInt(maxSalary, 10);
-      const salaryFilter = {};
+    // Salary filter
+    const salaryFilter = {};
+    const min = parseInt(minSalary, 10);
+    const max = parseInt(maxSalary, 10);
 
-      // Only add the filter if the parsed number is valid (i.e. not NaN)
-      if (!isNaN(min)) {
-        salaryFilter.$gte = min;
-      }
-      if (!isNaN(max)) {
-        salaryFilter.$lte = max;
-      }
-      // Only add the salary filter if at least one of the values is valid.
-      if (Object.keys(salaryFilter).length > 0) {
-        filters.minAnnualSalary = salaryFilter;
-      }
+    if (!isNaN(min)) {
+      salaryFilter.$gte = min;
+    }
+    if (!isNaN(max)) {
+      salaryFilter.$lte = max;
+    }
+    if (Object.keys(salaryFilter).length > 0) {
+      filters.minAnnualSalary = salaryFilter;
     }
 
-    // Pagination logic
-    const skip = (pageNumber - 1) * pageSize;
-    const limit = parseInt(pageSize);
+    // Pagination
+    const page = Math.max(parseInt(pageNumber, 10) || 1, 1);
+    const limit = Math.max(parseInt(pageSize, 10) || 15, 1);
+    const skip = (page - 1) * limit;
 
-    // Fetch jobs with the provided filters and pagination
-    const getAllJobs = await jobsModel.find(filters).skip(skip).limit(limit);
+    // Query DB
+    const jobs = await jobsModel.find(filters).skip(skip).limit(limit);
     const totalJobsCount = await jobsModel.countDocuments(filters);
 
-    console.log("getAllJobs: ", getAllJobs);
-
     return successResponse(res, 'Jobs fetched successfully.', {
-      getAllJobs,
+      getAllJobs: jobs,
       totalJobsCount,
-      pageNumber: parseInt(pageNumber),
+      pageNumber: page,
       pageSize: limit,
     });
 
   } catch (error) {
-    console.log("Error Message in Catch BLock:", error.message);
+    console.log("Error Message in Catch Block:", error.message);
     return serverErrorResponse(res, 'Internal server error. Please try again later');
   }
 };

@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+	<meta charset="UTF-8" />
 	<title>{{name}} - CV</title>
 	<style>
 		@page {
@@ -9,142 +10,115 @@
 			margin: 0;
 		}
 
-		.education-item h3,
-		.education-item p {
-			margin: 2px 0;
-		}
-
 		body {
-			font-family: Arial, sans-serif;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background-color: #f9f9f9;
 			margin: 0;
 			padding: 0;
-
 			color: #333;
 		}
 
 		.cv-container {
-			background: #fff;
 			width: 100%;
-			min-height: 297mm;
-			padding: 0;
+			max-width: 800px;
+			margin: auto;
+			background: white;
+			padding: 30px 40px;
 			box-sizing: border-box;
-			page-break-after: always;
-			overflow: hidden;
-			/* Ensures no accidental overflow */
 		}
 
 		.header {
-
-			color: white;
-			display: flex;
-			align-items: center;
-			padding: 20px;
-			box-sizing: border-box;
-			width: 100%;
-			/* Full width for header */
+			text-align: center;
+			padding-bottom: 20px;
+			border-bottom: 2px solid #e0e0e0;
 		}
 
 		.header img {
-			width: 80px;
-			height: 80px;
+			width: 120px;
+			height: 120px;
 			border-radius: 50%;
 			object-fit: cover;
-			margin-right: 15px;
+			margin-bottom: 10px;
 		}
 
 		.header h1 {
-			margin: 0;
-			font-size: 32px;
+			margin: 10px 0 5px;
+			font-size: 28px;
+			color: #1a1c36;
 		}
 
 		.header p {
-			font-size: 16px;
-			margin: 5px 0;
+			font-size: 15px;
+			color: #666;
 		}
 
 		.contact {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 10px;
+			text-align: center;
 			margin-top: 12px;
 			font-size: 14px;
-		}
-
-		.contact div {
 			display: flex;
+			flex-direction: column;
 			align-items: center;
-			gap: 5px;
+			gap: 4px;
 		}
 
+		.contact div,
 		.contact a {
-			color: white;
-			text-decoration: underline;
+			display: block;
+			color: #444;
+			text-decoration: none;
 		}
 
-		.content {
-			display: flex;
-			width: 100%;
-			/* Ensures columns fit full width */
-			flex-wrap: nowrap;
-			/* Ensure they stay side-by-side */
-			margin-top: 16px;
-		}
-
-		.left-column,
-		.right-column {
-			width: 50%;
-			padding: 15px;
-			box-sizing: border-box;
+		section {
+			margin-top: 35px;
 		}
 
 		h2 {
-			font-size: 20px;
-			color: #303b4d;
-			border-bottom: 2px solid #303b4d;
-			margin-bottom: 10px;
+			font-size: 18px;
+			color: #1a1c36;
+			border-bottom: 1px solid #ddd;
+			padding-bottom: 6px;
+			margin-bottom: 12px;
+			text-transform: uppercase;
 		}
 
 		.section-content {
-			font-size: 16px;
-			margin-bottom: 12px;
-		}
-
-		.experience-item,
-		.project-item {
-			margin-bottom: 10px;
-		}
-
-		.experience-item h3,
-		.project-item h3 {
-			font-size: 18px;
-			color: #303b4d;
-			margin: 0;
-		}
-
-		.experience-item p,
-		.project-item p {
-			margin: 3px 0;
-			font-size: 14px;
-			color: #555;
+			font-size: 15px;
+			line-height: 1.6;
 		}
 
 		.skills span,
 		.interests span {
 			display: inline-block;
-			background: #e1e5e8;
-			color: #303b4d;
+			background: #eef0f2;
+			color: #1a1c36;
 			padding: 6px 12px;
-			margin: 3px;
-			border-radius: 15px;
-			font-size: 16px;
+			margin: 4px 6px 4px 0;
+			border-radius: 14px;
+			font-size: 13px;
 		}
 
-		section {
-			margin-bottom: 20px;
+		.experience-item,
+		.project-item {
+			margin-bottom: 18px;
+		}
+
+		.experience-item h3,
+		.project-item h3 {
+			margin: 0;
+			font-size: 16px;
+			color: #303b4d;
+		}
+
+		.experience-item p,
+		.project-item p {
+			margin: 5px 0;
+			font-size: 14px;
+			color: #444;
 		}
 
 		a {
-			color: #212933;
+			color: #0066cc;
 			text-decoration: none;
 		}
 
@@ -153,29 +127,18 @@
 		}
 
 		@media print {
+			body {
+				background: white;
+			}
+
 			.cv-container {
-				width: 100%;
-				height: 100%;
-			}
-		}
-
-		@media (max-width: 600px) {
-			.content {
-				flex-direction: column;
-			}
-
-			.left-column,
-			.right-column {
-				width: 100%;
-			}
-
-			.header {
-				flex-direction: column;
-				align-items: flex-start;
+				padding: 20px;
+				box-shadow: none;
 			}
 
 			.header img {
-				margin-bottom: 10px;
+				width: 100px;
+				height: 100px;
 			}
 		}
 	</style>
@@ -185,74 +148,62 @@
 
 	<div class="cv-container">
 		<div class="header" id="header">
-
-			<img src="{{imageUrl}}" alt="Profile Picture">
-			<div>
-				<h1>{{name}}</h1>
-				<p>{{summary}}</p>
+			<img src="{{imageUrl}}" alt="Profile Picture" />
+			<h1>{{name}}</h1>
+			<p>{{summary}}</p>
+			<div class="contact">
 				{{{contact}}}
 			</div>
 		</div>
 
-		<div class="content">
-			<div class="left-column">
-				<section>
-					<h2>Education</h2>
-					<div class="section-content">
-						{{{education}}}
-					</div>
-				</section>
-
-				<section>
-
-					{{{experience}}}
-
-				</section>
+		<section>
+			<h2>Education</h2>
+			<div class="section-content">
+				{{{education}}}
 			</div>
+		</section>
 
-			<div class="right-column">
+		<section>
+			{{{experience}}}
+		</section>
 
-				<section>
-					<h2>Skills</h2>
-					<div class="skills">
-						{{{skills}}}
-					</div>
-				</section>
+		<section>
+			{{{projects}}}
+		</section>
 
-				<section>
-					{{{projects}}}
-				</section>
+		<section>
+			{{{certificates}}}
+		</section>
 
-				<section>
-					{{{certificates}}}
-				</section>
-
-				<section>
-					<h2>Languages</h2>
-					<div class="section-content">
-						{{{languages}}}
-					</div>
-				</section>
-
-				<section>
-
-					{{{interests}}}
-
-				</section>
+		<section>
+			<h2>Skills</h2>
+			<div class="section-content skills">
+				{{{skills}}}
 			</div>
-		</div>
+		</section>
+
+		<section>
+			<h2>Languages</h2>
+			<div class="section-content">
+				{{{languages}}}
+			</div>
+		</section>
+
+		<section>
+			{{{interests}}}
+		</section>
 	</div>
 
 	<script>
-
 		document.addEventListener("DOMContentLoaded", function () {
 			const header = document.getElementById("header");
 			const color = "{{color}}" || "#1a1c36";
 			if (color && header) {
-				header.style.backgroundColor = color;
+				header.style.borderBottom = "2px solid " + color;
 			}
 		});
 	</script>
+
 </body>
 
 </html>

@@ -241,9 +241,13 @@ const getAllJobs = async (req, res) => {
       filters.title = { $regex: search.trim(), $options: 'i' };
     }
 
-    // Location (case-insensitive partial)
+    // // Location (case-insensitive partial)
+    // if (location && location.trim()) {
+    //   filters.location = { $regex: location.trim(), $options: 'i' };
+    // }
+
     if (location && location.trim()) {
-      filters.location = { $regex: location.trim(), $options: 'i' };
+      filters.country = { $regex: location.trim(), $options: 'i' };
     }
 
     console.log("location: ", location);

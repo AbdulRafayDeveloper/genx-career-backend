@@ -3,17 +3,17 @@ export const contactToHtml = (contact = {}) => {
 
   return `
 	  <div style="display: flex; flex-wrap: wrap; gap: 15px; padding-top:12px">
-		${`<div>📧 <a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></div>`}
-		${`<div>📞 ${phone}</div>`}
-		${`<div>📍 ${location}</div>`}
+		${`<div><a href="mailto:${email}" style="color: inherit; text-decoration: none;">${email}</a></div>`}
+		${`<div> ${phone}</div>`}
+		${`<div>${location}</div>`}
 		${
       linkedin
-        ? `<div>🔗 <a href="${linkedin}" target="_blank" style="color: inherit; text-decoration: none;">LinkedIn</a></div>`
+        ? `<div> <a href="${linkedin}" target="_blank" style="color: inherit; text-decoration: none;">LinkedIn</a></div>`
         : ""
     }
 		${
       github
-        ? `<div>🔗 <a href="${github}" target="_blank" style="color: inherit; text-decoration: none;">GitHub</a></div>`
+        ? `<div> <a href="${github}" target="_blank" style="color: inherit; text-decoration: none;">GitHub</a></div>`
         : ""
     }
 	  </div>`;

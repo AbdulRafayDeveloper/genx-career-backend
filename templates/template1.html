@@ -5,86 +5,112 @@
 	<meta charset="UTF-8" />
 	<title>{{name}} - CV</title>
 	<style>
-		@page {
-			size: A4;
+		* {
 			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
 		}
 
 		body {
 			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 			background-color: #f9f9f9;
-			margin: 0;
-			padding: 0;
 			color: #333;
 		}
 
-		.cv-container {
-			width: 100%;
-			max-width: 800px;
-			margin: auto;
-			background: white;
-			padding: 30px 40px;
-			box-sizing: border-box;
+		.cv-wrapper {
+			display: flex;
+			max-width: 900px;
+			margin: 40px auto;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			background-color: white;
 		}
 
-		.header {
-			text-align: center;
-			padding-bottom: 20px;
-			border-bottom: 2px solid #e0e0e0;
+		.sidebar {
+			width: 30%;
+			background-color: #2b3c56;
+			color: white;
+			padding: 30px 20px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
 		}
 
-		.header img {
-			width: 120px;
-			height: 120px;
+		.sidebar img {
+			width: 100px;
+			height: 100px;
 			border-radius: 50%;
 			object-fit: cover;
 			margin-bottom: 10px;
 		}
 
-		.header h1 {
-			margin: 10px 0 5px;
-			font-size: 28px;
-			color: #1a1c36;
-		}
-
-		.header p {
-			font-size: 15px;
-			color: #666;
-		}
-
-		.contact {
+		.sidebar h1 {
+			font-size: 20px;
+			margin-bottom: 4px;
 			text-align: center;
-			margin-top: 12px;
-			font-size: 14px;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: 4px;
 		}
 
-		.contact div,
-		.contact a {
+		.sidebar p {
+			font-size: 13px;
+			margin-bottom: 12px;
+			text-align: center;
+			color: #d1d1d1;
+		}
+
+		.sidebar .contact {
+			text-align: left;
+			font-size: 13px;
+			margin-top: 20px;
+			color: #d1d1d1;
+		}
+
+		.sidebar .contact div,
+		.sidebar .contact a {
+			margin: 4px 0;
 			display: block;
-			color: #444;
+			word-break: break-word;
+			color: #e0e0e0;
 			text-decoration: none;
 		}
 
-		section {
-			margin-top: 35px;
+		.sidebar .info-block {
+			margin-top: 20px;
+			width: 100%;
 		}
 
-		h2 {
-			font-size: 18px;
+		.sidebar .info-block h3 {
+			font-size: 13px;
+			border-bottom: 1px solid #445066;
+			margin-bottom: 8px;
+			padding-bottom: 4px;
+		}
+
+		.sidebar .info-block span {
+			display: inline-block;
+			background-color: #3c4d68;
+			padding: 4px 8px;
+			border-radius: 12px;
+			margin: 3px 3px 0 0;
+			font-size: 12px;
+		}
+
+		.main-content {
+			width: 70%;
+			padding: 30px 40px;
+		}
+
+		.main-content h2 {
+			font-size: 16px;
 			color: #1a1c36;
-			border-bottom: 1px solid #ddd;
+			border-bottom: 1px solid #ccc;
 			padding-bottom: 6px;
 			margin-bottom: 12px;
 			text-transform: uppercase;
 		}
 
-		.section-content {
-			font-size: 15px;
+		.main-content .section-content {
+			font-size: 14px;
 			line-height: 1.6;
+			margin-bottom: 25px;
 		}
 
 		.skills span,
@@ -106,24 +132,15 @@
 		.experience-item h3,
 		.project-item h3 {
 			margin: 0;
-			font-size: 16px;
+			font-size: 15px;
 			color: #303b4d;
 		}
 
 		.experience-item p,
 		.project-item p {
 			margin: 5px 0;
-			font-size: 14px;
+			font-size: 13px;
 			color: #444;
-		}
-
-		a {
-			color: #0066cc;
-			text-decoration: none;
-		}
-
-		a:hover {
-			text-decoration: underline;
 		}
 
 		@media print {
@@ -131,14 +148,18 @@
 				background: white;
 			}
 
-			.cv-container {
-				padding: 20px;
+			.cv-wrapper {
 				box-shadow: none;
 			}
 
-			.header img {
-				width: 100px;
-				height: 100px;
+			.sidebar img {
+				width: 80px;
+				height: 80px;
+			}
+
+			.sidebar,
+			.main-content {
+				padding: 20px;
 			}
 		}
 	</style>
@@ -146,52 +167,65 @@
 
 <body>
 
-	<div class="cv-container">
-		<div class="header" id="header">
+	<div class="cv-wrapper">
+		<!-- Sidebar -->
+		<div class="sidebar" id="header">
 			<img src="{{imageUrl}}" alt="Profile Picture" />
 			<h1>{{name}}</h1>
 			<p>{{summary}}</p>
 			<div class="contact">
 				{{{contact}}}
 			</div>
-		</div>
 
-		<section>
-			<h2>Education</h2>
-			<div class="section-content">
-				{{{education}}}
-			</div>
-		</section>
-
-		<section>
-			{{{experience}}}
-		</section>
-
-		<section>
-			{{{projects}}}
-		</section>
-
-		<section>
-			{{{certificates}}}
-		</section>
-
-		<section>
-			<h2>Skills</h2>
-			<div class="section-content skills">
+			<div class="info-block">
+				<h3>Skills</h3>
 				{{{skills}}}
 			</div>
-		</section>
 
-		<section>
-			<h2>Languages</h2>
-			<div class="section-content">
+			<div class="info-block">
+				<h3>Languages</h3>
 				{{{languages}}}
 			</div>
-		</section>
 
-		<section>
-			{{{interests}}}
-		</section>
+			<div class="info-block">
+				<h3>Honors & Awards</h3>
+				{{{awards}}}
+			</div>
+
+			<div class="info-block">
+				<h3>Certifications</h3>
+				{{{certificates}}}
+			</div>
+
+			<div class="info-block">
+				<h3>Interests</h3>
+				{{{interests}}}
+			</div>
+		</div>
+
+		<!-- Main Content -->
+		<div class="main-content">
+			<section>
+				<h2>Education</h2>
+				<div class="section-content">
+					{{{education}}}
+				</div>
+			</section>
+
+			<section>
+				<h2>Experience</h2>
+				<div class="section-content">
+					{{{experience}}}
+				</div>
+			</section>
+
+			<section>
+				<h2>Projects / Activities</h2>
+				<div class="section-content">
+					{{{projects}}}
+				</div>
+			</section>
+		</div>
 	</div>
 
 	<script>

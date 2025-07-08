@@ -96,7 +96,6 @@ export const interestsToHtml = (interests = []) =>
   renderOrEmpty(
     interests.filter((interest) => interest && interest.trim() !== ""),
     (cleanedInterests) => `
-    <h2>Interests</h2>
     <div class="interests">
       ${cleanedInterests
         .map((interest) => `<span>${interest}</span>`)

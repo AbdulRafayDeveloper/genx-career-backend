@@ -41,12 +41,12 @@ const registerUser = async (req, res) => {
         return serverErrorResponse(res, "Failed to create user");
       }
 
-      const subject = "Verify Your Email";
-      const html = generateEmailVerificationTemplate(newUser.name, `${process.env.CLIENT_URL}/auth/verify-email?token=${token}`);
+      // const subject = "Verify Your Email";
+      // const html = generateEmailVerificationTemplate(newUser.name, `${process.env.CLIENT_URL}/auth/verify-email?token=${token}`);
 
-      await sendEmail(email, subject, html);
+      // await sendEmail(email, subject, html);
 
-      return successResponse(res, "User account created successfully. Please verify your email", token);
+      return successResponse(res, "User account created successfully", token);
     } else {
       return serverErrorResponse(res, "Failed to create user");
     }
@@ -73,13 +73,13 @@ const loginUser = async (req, res) => {
 
     const passwordCheck = await bcrypt.compare(password, user.password);
 
-    if (user.isEmailVerified === false) {
-      return notFoundResponse(
-        res,
-        "Your email address has not been verified. Please check your inbox and verify your email to continue.",
-        null
-      );
-    }
+    // if (user.isEmailVerified === false) {
+    //   return notFoundResponse(
+    //     res,
+    //     "Your email address has not been verified. Please check your inbox and verify your email to continue.",
+    //     null
+    //   );
+    // }
 
     if (user && passwordCheck) {
       const userLoginToken = jwt.sign(

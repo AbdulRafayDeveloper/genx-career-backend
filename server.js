@@ -40,6 +40,11 @@ const port = process.env.PORT || 8000;
 // Use all routes
 app.use(routes);
 
+// test / api route
+app.get("/", (req, res) => {
+  res.send("AWS Main project backend is working now");
+});
+
 
 // Run the port
 app.listen(port, () => {
